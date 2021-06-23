@@ -23,7 +23,7 @@ error log 是 MySQL 的错误日志。
 
 查看当前的错误日志文件  
 没有设置错误日志文件，默认指定了一个的错误日志文件
-```shell
+```
 mysql> show variables like 'log_error';
 +---------------+----------------------+
 | Variable_name | Value                |
@@ -267,9 +267,9 @@ show global status like '%slow_queries%'; #查询当前慢查询sql条数命令
 
 去mysql的data目录下找到慢查询日志文件：  
 我没有去配置日志文件名，所以是一个默认的文件名：localhost-slow.log
-<div style="text-align: center;">
-    <img src="/images/1624261484667.jpg" alt="题注" />
-</div>
+
+![慢查询日志图片](https://niubilityoyr.github.io/images/MySQL/1624261484667.jpg)
+
 可以看到当前慢查询日志中会记录查询超过了阈值的sql，我们刚刚的select sleep(4)就在当中，而且可以明确的看到当前sql，当前查询时间，锁的时间，一共有多少数据。
 
 ***
@@ -279,9 +279,7 @@ show global status like '%slow_queries%'; #查询当前慢查询sql条数命令
 日志查询分析器的体现：  
 在生产环境中，如果要手工分析日志，查找、分析SQL，显然是个体力活，MySQL提供了日志分析工具mysqldumpslow。
 
-<div style="text-align: center;">
-    <img src="/images/日志查询分析器使用.jpg" alt="日志查询分析器帮助信息" />
-</div>
+![日志查询分析器帮助信息图片](https://niubilityoyr.github.io/images/MySQL/日志查询分析器使用.jpg)
 
 mysqldumpslow --help  查看mysqldumpslow的帮助信息
 
@@ -310,5 +308,55 @@ mysqldumpslow -s t -t 10 -g "left join" /var/lib/mysql/atguigu-slow.log
 #另外建议在使用这些命令时结合 | 和more 使用 ，否则有可能出现爆屏情况
 mysqldumpslow -s r -t 10 /var/lib/mysql/atguigu-slow.log | more
 ```
+
+***
+
+# bin log（归档日志）
+
+## 定义
+
+1111
+
+***
+
+## 相关参数
+
+* log_bin：指定 bin log是否打开
+* log_bin_basename：指定的是 bin log 的基本文件名，后面会追加标识来表示每一个文件
+* log_bin_index：指定的是 bin log 文件的索引文件，这个文件管理了所有的 bin log 文件的目录
+
+***
+
+# redo log（重做日志）
+
+## 定义
+
+redo log 是 MySQL 的物理日志，也叫重做日志，记录存储引擎 InnoDB 的事务日志。
+
+MySQL 每执行一条 SQL 更新语句，不是每次数据更改都立刻写到磁盘，而是先将记录写到 redo log 里面，并更新内存（这时内存与磁盘的数据不一致，将这种有差异的数据称为脏页），一段时间后，再一次性将多个操作记录写到到磁盘上，这样可以减少磁盘 io 成本，提高操作速度。先写日志，再写磁盘，这就是 MySQL 里经常说到的 WAL 技术，即 Write-Ahead Logging，又叫预写日志。MySQL 通过 WAL 技术保证事务的持久性。
+
+***
+
+# undo log（回滚日志）
+
+## 定义
+
+
+***
+
+## 相关参数
+
+undo log相关参数：
+* innodb_undo_logs :设置回滚日志的回滚段大小，默认为128k
+* innodb_undo_directory: 设置回滚日志存放的目录。
+* innodb_undo_tablespace:设置了回滚日志由多少个回滚日志文件组成，默认为0.
+
+***
+
+# relay log（中继日志）
+
+## 定义
+
+relay-log中继日志是连接master和slave的核心.
 
 ***
