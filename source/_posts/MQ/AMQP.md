@@ -108,7 +108,7 @@ Channel，每个Channel代表一个会话任务。
 直连交换机经常用来循环分发任务给多个消费者（我们称之为轮询）。  
 比如说有3个消费者，4个任务。分别分发每个消费者一个任务后，第4个任务又分发给了第一个消费者。综上，我们很容易得出一个结论：在AMQP 0-9-1中，消息的负载均衡是发生在消费者（consumer）之间的，而不是队列（queue）之间。
 
-直连型交换机图例：
+直连型交换机图例：  
 ![直连交换机图解](https://niubilityoyr.github.io/images/MQ/直连交换机图解.png)
 
 当生产者（P）发送消息时 Rotuing key=booking 时，这时候将消息传送给 Exchange，Exchange 获取到生产者发送过来消息后，会根据自身的规则进行与匹配相应的 Queue，这时发现 Queue1 和 Queue2 都符合，就会将消息传送给这两个队列。
@@ -127,7 +127,7 @@ Channel，每个Channel代表一个会话任务。
 * 3）分发系统使用它来广播各种状态和配置更新
 * 4）在群聊的时候，它被用来分发消息给参与群聊的用户。（AMQP没有内置presence的概念，因此XMPP可能会是个更好的选择）
 
-扇型交换机图例：
+扇型交换机图例：  
 ![扇型交换机图解](https://niubilityoyr.github.io/images/MQ/扇型交换机图解.png)
 
 上图所示，生产者（P）生产消息 1 将消息 1 推送到 Exchange，由于 Exchange Type=fanout 这时候会遵循 fanout 的规则将消息推送到所有与它绑定 Queue，也就是图上的两个 Queue 最后两个消费者消费。
@@ -147,7 +147,7 @@ Channel，每个Channel代表一个会话任务。
 2）routing key 为一个句点号 “.” 分隔的字符串（我们将被句点号 “. ” 分隔开的每一段独立的字符串称为一个单词），如“stock.usd.> nyse”、“nyse.vmw”、“quick.> orange.rabbit”  
 3）binding key 与 routing key 一样也是句点号 “.” 分隔的字符串
 
-主题交换机图例：
+主题交换机图例：  
 ![主题交换机图解](https://niubilityoyr.github.io/images/MQ/主题交换机图解.png)
 
 当生产者发送消息 Routing Key=F.C.E 的时候，这时候只满足 Queue1，所以会被路由到 Queue 中，如果 Routing Key=A.C.E 这时候会被同是路由到 Queue1 和 Queue2 中，如果 Routing Key=A.F.B 时，这里只会发送一条消息到 Queue2 中。
