@@ -7,6 +7,8 @@ tags: MySQL
 categories: MySQL
 ---
 
+注意：当前设置系统参数方式，mysql重启即失效，如果要永久存在则需要修改配置文件。
+
 # error log（错误日志）
 
 ## 定义
@@ -18,6 +20,8 @@ error log 是 MySQL 的错误日志。
 **注意：默认情况下，错误日志的文件名为：主机名.err。 但 error 日志并不会记录所有的错误信息，只有MySQL服务实例运行过程中发声的关键错误（critical）才会被记录下来。**
 
 ***
+
+<!-- more -->
 
 ## 设置错误日志
 
@@ -116,7 +120,7 @@ mysql> show variables like '%general_log%';
 2 rows in set (0.00 sec)
 ```
 
-命令：(动态修改，重启失效)
+命令：
 ``` sql
 show variables like '%general_log%'; #查看普通日志是否开启
 show variables like '%general_log_file%'; #查看普通日志文件的存放路径
@@ -184,7 +188,6 @@ slow query log 是 MySQL 的慢查询日志。
 ## 开启慢查询日志
 
 查看慢查询日志的当前配置.  
-通过查看变量来判断是否开启慢查询日志.  
 默认情况下slow_query_log的值为OFF，表示慢查询日志是禁用的。
 ```
 mysql> show variables like '%slow_query_log%';
@@ -197,7 +200,7 @@ mysql> show variables like '%slow_query_log%';
 2 rows in set (0.00 sec)
 ```
 
-命令：（动态修改，重启失效）
+命令：
 ``` sql
 show variables like '%slow_query_log%'; #查看是否开启
 show variables like '%slow_query_log_file%'; #查看慢查询日志文件的存放路径
@@ -205,7 +208,7 @@ show variables like '%slow_query_log_file%'; #查看慢查询日志文件的存�
 set global slow_query_log=1; #设置开启慢查询日志
 ```
 
-修改配置文件：(永久开启)
+修改配置文件：(永久开启)  
 修改 my.cnf 文件，在 [mysqld] 下增加或修改参数
 ```
 [mysqld]
@@ -217,7 +220,7 @@ slow_query_log_file=/var/lib/mysql/atguigu-slow.log
 
 ## 什么 sql 会被记录到慢查询日志
 
-问题：开启慢查询日志后，什么 sql 会被记录到慢查询日志里面呢？  
+问：开启慢查询日志后，什么 sql 会被记录到慢查询日志里面呢？  
 答：慢查询日志主要记录【响应时间超过阀值的sql语句】或【没有使用索引】的查询语句。
 
 ### 记录响应时间超过阀值的sql语句
@@ -230,8 +233,6 @@ long_query_time：设置慢查询的时间阈值，默认阈值是10s。可以�
 show variables LIKE 'long_query_time%'; #查看long_query_time的值
 set global long_query_time=5; #设置查询超过5秒则算慢查询sql
 ```
-注意：当前设置系统参数方式，mysql重启即失效，如果要永久存在则需要修改配置文件。
-
 
 修改配置文件：(永久开启)  
 修改 my.cnf 文件，在 [mysqld] 下增加或修改参数
@@ -260,7 +261,8 @@ log_queries_not_using_indexes=1
 
 ``` sql
 set global slow_query_log=1; #设置开启慢查询日志
-set global long_query_time=3; #设置查询超过3秒则算慢查询sql
+set global long_query_time=3; #设置查询超过3秒则算慢查询sql（注意，这里是全局命令设置，需要重新连接才生效）
+
 select sleep(4) #模拟一次查询，查询耗时4秒
 show global status like '%slow_queries%'; #查询当前慢查询sql条数命令
 ```
@@ -311,19 +313,156 @@ mysqldumpslow -s r -t 10 /var/lib/mysql/atguigu-slow.log | more
 
 ***
 
-# bin log（归档日志）
+# bin log（二进制日志）
 
 ## 定义
+bin log 是 MySQL 的二进制文件，也叫归档日志。  
+主要记录 MySQL 数据库中的所有更新操作，如：use，insert，delete，update，create，alter，drop等操作。不改变数据的sql不会记录，比如 select 语句一把不会被记录，因为他们不会对数据产生任何改动。  
+用一句更简介易懂的话概况就是：所有涉及数据变动的操作，都会记录到二进制日志文件中。
 
-1111
+> 重要的使用场景：  
+> mysql主从复制：mysql replication 在 master 端开启 bin log，master 把它的二进制日志传递给 slaves 来达到master-slave数据一致的目的。  
+> 数据恢复：通过mysqlbinlog工具来恢复数据
+
+> 二进制日志包含两种文件：  
+> 二进制日志索引文件（文件名后缀.index），用于记录索引的二进制文件  
+> 二进制日志文件（文件名后缀为.00000*）记录数据库所有的DDL和DML语句事件
 
 ***
 
 ## 相关参数
 
+bin log相关参数：
 * log_bin：指定 bin log是否打开
 * log_bin_basename：指定的是 bin log 的基本文件名，后面会追加标识来表示每一个文件
 * log_bin_index：指定的是 bin log 文件的索引文件，这个文件管理了所有的 bin log 文件的目录
+
+***
+
+## 开启二进制日志
+
+查看二进制日志的当前配置：  
+可以看到，二进制日志默认是不开启的
+```
+mysql> show variables like 'log_bin';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| log_bin       | OFF   |
++---------------+-------+
+1 row in set (0.00 sec)
+```
+
+修改配置文件：(永久开启)  
+修改 my.cnf 文件，在 [mysqld] 下增加或修改参数
+```
+[mysqld] 
+log-bin=mysql-bin
+server-id=001
+```
+
+修改配置文件后，重启服务配置生效  
+查看 bin log 日志文件
+![bin log 日志文件](imgs/1624350274231.jpg)
+
+***
+
+## 查看二进制日志文件
+
+注意：  
+1）bin log日志与数据库文件在同目录中。  
+2）bin log是二进制文件，普通文件查看器cat、more、vim等都无法打开，必须使用自带的mysqlbinlog命令查看。  
+
+### mysqlbinlog 工具查看
+
+> mysqlbinlog 是 MySQL 中自带的工具，具体位置在 MySQL 的 bin 目录下。
+> 在Mysql5.5以下版本使用mysqlbinlog命令时如果报错，就加上"--no-defaults"选项
+
+查看二进制日志文件：mysqlbinlog mysql-bin.000002
+```
+# at 391
+#210622 17:06:40 server id 1  end_log_pos 501   Query   thread_id=2     exec_time=0     error_code=0
+SET TIMESTAMP=1624352800/*!*/;
+insert into admin_info values(1, "admin", 100) #执行的sql
+/*!*/;
+# at 501
+#210622 17:06:40 server id 1  end_log_pos 528   Xid = 7 #执行的时间
+```
+> 图解  
+> server id 1：数据库主机的服务号  
+> end_log_pos 528：sql结束时的pos节点  
+> thread_id=11：线程号  
+
+### 命令查看
+
+> mysqlbinlog 查看取出 bin log 日志的全文内容比较多，不容易分辨查看到pos点信息  
+> 介绍一种更为方便的查询命令 show bin log events
+
+命令解析 show bin log events [IN 'log_name'] [FROM pos] [LIMIT [offset,] row_count];    
+参数解析：  
+a、IN 'log_name':指定要查询的bin log文件名（不指定就是第一个bin log文件  
+b、FROM pos:指定从哪个pos起始点开始查起（不指定就是从整个文件首个pos点开始算）  
+c、LIMIT【offset】：偏移量(不指定就是0)  
+d、row_count :查询总条数（不指定就是所有行）  
+
+show bin log events查询：
+```
+mysql> show bin log events in'mysql-bin.000002';
++------------------+-----+-------------+-----------+-------------+---------------------------------------------------------------------------------+
+| Log_name         | Pos | Event_type  | Server_id | End_log_pos | Info                                                                            |
++------------------+-----+-------------+-----------+-------------+---------------------------------------------------------------------------------+
+| mysql-bin.000002 |   4 | Format_desc |         1 |         107 | Server ver: 5.5.62-log, bin log ver: 4                                           |
+| mysql-bin.000002 | 107 | Query       |         1 |         192 | create database admin                                                           |
+| mysql-bin.000002 | 192 | Query       |         1 |         322 | use `admin`; create table admin_info(id int(11), name varchar(50), age int(11)) |
+| mysql-bin.000002 | 322 | Query       |         1 |         391 | BEGIN                                                                           |
+| mysql-bin.000002 | 391 | Query       |         1 |         501 | use `admin`; insert into admin_info values(1, "admin", 100)                     |
+| mysql-bin.000002 | 501 | Xid         |         1 |         528 | COMMIT /* xid=7 */                                                              |
+| mysql-bin.000002 | 528 | Query       |         1 |         639 | use `admin`; create table role(id int(11), name varchar(25))                    |
++------------------+-----+-------------+-----------+-------------+---------------------------------------------------------------------------------+
+7 rows in set (0.00 sec)
+```
+
+***
+
+## 二进制日志文件常用操作命令
+
+1）查看所有 bin log 日志。  
+show master logs;
+```
+mysql> show master logs;
++------------------+-----------+
+| Log_name         | File_size |
++------------------+-----------+
+| mysql-bin.000001 |       107 |
++------------------+-----------+
+1 row in set (0.00 sec)
+```
+
+2）查看master状态，即最后（最新）一个bin log日志的编号名称，及其最后一个操作事件pos结束点(Position)值。  
+show master status;
+```
+mysql> show master status;
++------------------+----------+--------------+------------------+
+| File             | Position | bin log_Do_DB | bin log_Ignore_DB |
++------------------+----------+--------------+------------------+
+| mysql-bin.000001 |      107 |              |                  |
++------------------+----------+--------------+------------------+
+1 row in set (0.00 sec)
+```
+
+3）flush 刷新log日志，自此刻开始产生一个新编号的bin log日志文件;  
+flush logs;
+
+注意：每当mysqld服务重启时，会自动执行此命令，刷新bin log日志；在mysqlddump备份数据时加-F选项也会刷新bin log日志；
+
+4）重置（清空）所有bin log日志;  
+reset master;
+
+***
+
+## 利用二进制日志恢复数据
+
+// TODO
 
 ***
 
