@@ -1,6 +1,6 @@
 ---
 title: MySQL日志系统
-date: 2021-06-22 00:00:05
+date: 2021-06-22 00:00:00
 author: 神奇的荣荣
 summary: ""
 tags: MySQL
@@ -268,8 +268,7 @@ show global status like '%slow_queries%'; #查询当前慢查询sql条数命令
 ```
 
 去mysql的data目录下找到慢查询日志文件：  
-我没有去配置日志文件名，所以是一个默认的文件名：localhost-slow.log
-
+我没有去配置日志文件名，所以是一个默认的文件名：localhost-slow.log  
 ![慢查询日志图片](https://niubilityoyr.github.io/images/MySQL/1624261484667.jpg)
 
 可以看到当前慢查询日志中会记录查询超过了阈值的sql，我们刚刚的select sleep(4)就在当中，而且可以明确的看到当前sql，当前查询时间，锁的时间，一共有多少数据。
@@ -279,12 +278,10 @@ show global status like '%slow_queries%'; #查询当前慢查询sql条数命令
 ## 日志查询分析器（mysqldumpslow）
 
 日志查询分析器的体现：  
-在生产环境中，如果要手工分析日志，查找、分析SQL，显然是个体力活，MySQL提供了日志分析工具mysqldumpslow。
-
+在生产环境中，如果要手工分析日志，查找、分析SQL，显然是个体力活，MySQL提供了日志分析工具mysqldumpslow。  
 ![日志查询分析器帮助信息图片](https://niubilityoyr.github.io/images/MySQL/日志查询分析器使用.jpg)
 
 mysqldumpslow --help  查看mysqldumpslow的帮助信息
-
 * s：表示按照何种方式排序
 * c：访问次数
 * l：锁定时间
@@ -362,8 +359,8 @@ server-id=001
 ```
 
 修改配置文件后，重启服务配置生效  
-查看 bin log 日志文件
-![bin log 日志文件](imgs/1624350274231.jpg)
+查看 bin log 日志文件  
+![bin log 日志文件](https://niubilityoyr.github.io/images/MySQL/1624350274231.jpg)
 
 ***
 
@@ -375,8 +372,8 @@ server-id=001
 
 ### mysqlbinlog 工具查看
 
-> mysqlbinlog 是 MySQL 中自带的工具，具体位置在 MySQL 的 bin 目录下。
-> 在Mysql5.5以下版本使用mysqlbinlog命令时如果报错，就加上"--no-defaults"选项
+mysqlbinlog 是 MySQL 中自带的工具，具体位置在 MySQL 的 bin 目录下。  
+在Mysql5.5以下版本使用mysqlbinlog命令时如果报错，就加上"--no-defaults"选项
 
 查看二进制日志文件：mysqlbinlog mysql-bin.000002
 ```
