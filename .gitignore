@@ -8,3 +8,4 @@
 *.iml
 .deploy_git
 public/
+db.json
