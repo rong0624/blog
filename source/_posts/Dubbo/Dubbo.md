@@ -252,7 +252,7 @@ public class UserServiceImpl implements UserService {
 }
 ```
 
-（3）服务提供者配置：
+（3）服务提供者配置：  
 新增provider.xml文件
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -325,7 +325,7 @@ public class Provider {
 </dependency>
 ```
 
-（2）服务消费者配置
+（2）服务消费者配置  
 新增consumer.xml文件
 ```xml
 <beans xmlns="http://www.springframework.org/schema/beans"
@@ -963,13 +963,13 @@ ConsistentHash LoadBalance
 xml配置方式：
 ```xml
 <dubbo:reference id="userService" 
-interface="com.zang.gmall.service.UserService" url="dubbo://localhost:20880" />
+    interface="com.zang.gmall.service.UserService" url="dubbo://localhost:20880" />
 ```
 
 注解方式：
 ```java
-@Reference(url = "127.0.0.1:20880")   
- UserService userService;
+@Reference(url = "127.0.0.1:20880")
+UserService userService;
 ```
 
 # Hystrix 断路器
