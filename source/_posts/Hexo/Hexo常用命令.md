@@ -1,5 +1,5 @@
 ---
-title: hexo常用命令.md
+title: Hexo常用命令.md
 date: 2021-06-20 00:00:00
 author: 神奇的荣荣
 summary: ""
