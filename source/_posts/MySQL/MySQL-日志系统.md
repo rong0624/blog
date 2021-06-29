@@ -7,7 +7,35 @@ tags: MySQL
 categories: MySQL
 ---
 
-注意：当前设置系统参数方式，mysql重启即失效，如果要永久存在则需要修改配置文件。
+# MySQL日志分类
+
+注意：  
+设置系统参数方式修改，需要重新连接一个会话，如mysql重启即失效，如果要永久存在则需要修改配置文件。  
+如果想要当前会话生效通过set sesison进行设置。
+
+## 日志分类
+
+Mysql有7种日志文件，分别是：  
+1）errorlog（错误日志）  
+2）generallog（普通日志）  
+3）slow query log（慢查询日志）  
+4）binlog（二进制日志）  
+5）relaylog（中继日志）  
+6）redolog（重做日志）  
+7）undolog（回滚日志）
+
+***
+
+<!-- more -->
+
+## 重要日志
+
+slow query log：慢查询日志  
+undolog-redolog：事务日志（innoDB存储引擎日志）  
+binlog：二进制日志（server层日志）  
+relaylog：中继日志（主从复制）
+
+***
 
 # error log（错误日志）
 
@@ -20,8 +48,6 @@ error log 是 MySQL 的错误日志。
 **注意：默认情况下，错误日志的文件名为：主机名.err。 但 error 日志并不会记录所有的错误信息，只有MySQL服务实例运行过程中发声的关键错误（critical）才会被记录下来。**
 
 ***
-
-<!-- more -->
 
 ## 设置错误日志
 
@@ -314,7 +340,7 @@ mysqldumpslow -s r -t 10 /var/lib/mysql/atguigu-slow.log | more
 
 ## 定义
 
-bin log 是 MySQL 的二进制文件，也叫归档日志。  
+bin log 是 MySQL 的二进制文件，也叫归档日志，是Mysql Server层记录的。  
 主要记录 MySQL 数据库中的所有更新操作，如：use，insert，delete，update，create，alter，drop等操作。不改变数据的sql不会记录，比如 select 语句一般不会被记录，因为他们不会对数据产生任何改动。  
 
 **用一句更简介易懂的话概况就是：所有涉及数据变动的操作，都会记录到二进制日志文件中。**
@@ -580,36 +606,12 @@ mysql> show bin log events in'mysql-bin.000002';
 
 ***
 
-# redo log（重做日志）
-
-## 定义
-
-redo log 是 MySQL 的物理日志，也叫重做日志，记录存储引擎 InnoDB 的事务日志。
-
-MySQL 每执行一条 SQL 更新语句，不是每次数据更改都立刻写到磁盘，而是先将记录写到 redo log 里面，并更新内存（这时内存与磁盘的数据不一致，将这种有差异的数据称为脏页），一段时间后，再一次性将多个操作记录写到到磁盘上，这样可以减少磁盘 io 成本，提高操作速度。先写日志，再写磁盘，这就是 MySQL 里经常说到的 WAL 技术，即 Write-Ahead Logging，又叫预写日志。MySQL 通过 WAL 技术保证事务的持久性。
-
-***
-
-# undo log（回滚日志）
-
-## 定义
-
-
-***
-
-## 相关参数
-
-undo log相关参数：
-* innodb_undo_logs :设置回滚日志的回滚段大小，默认为128k
-* innodb_undo_directory: 设置回滚日志存放的目录。
-* innodb_undo_tablespace:设置了回滚日志由多少个回滚日志文件组成，默认为0.
-
-***
-
 # relay log（中继日志）
 
 ## 定义
 
-relay-log中继日志是连接master和slave的核心.
+// TODO
 
-***
+# MySQL 事务日志（redolog & undolog）
+
+请看MySQL事务日志分析博客
