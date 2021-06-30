@@ -347,10 +347,12 @@ bin log 是 MySQL 的二进制文件，也叫归档日志，是Mysql Server层�
 
 ***
 
-## 使用场景
+## 应用场景
 
-1）mysql主从复制：mysql replication 在 master 端开启 bin log，master 把它的二进制日志传递给 slaves 来达到master-slave数据一致的目的。  
-2）数据恢复：通过mysqlbinlog工具来恢复数据
+1）数据恢复  
+做数据恢复。因为binlog详细的记录了所有修改数据的sql，在某个时间段因操作导致数据出现问题，或数据库党纪数据丢失，那么就可以通过binlog来恢复历史数据。
+2）mysql主从复制  
+做数据备份和读写分离。在 master 端开启 bin log，master 把它的二进制日志传递给 slaves 来达到master-slave数据一致的目的。  
 
 ***
 
