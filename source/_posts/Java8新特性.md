@@ -19,6 +19,8 @@ tags:
 
 **其中 Lambda 表达式与 Stream API 最为核心的。**
 
+<!-- more -->
+
 # Lambda表达式
 
 ## 什么是Lambda 表达式
