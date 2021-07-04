@@ -51,7 +51,6 @@ Java8中引入了一个新操作符：“->”该操作符被称为剪头操作�
 
 ## 语法
 
-
 1）语法格式一：无参，无返回值
 ```java
 Runnable runnable = () -> System.out.println("hello lambda!!!");
@@ -256,7 +255,6 @@ public void test1() {
 }
 ```
 
-
 ### 数组创建Stream
 
 Java8 中的 Arrays 的静态方法 stream() 可以获取数组流：  
@@ -309,7 +307,7 @@ public static<T> Stream<T> generate(Supplier<T> s);
 
 ### 筛选与切片
 
-filter(Predicate p)：接收Lambda，从Stream流中排除某些元素
+filter(Predicate p)：接收Lambda，从Stream流中排除某些元素。
 
 distinct()：筛选，通过Stream流所生成元素的 hashCode() 和 equals() 去除重复元素。
 
@@ -431,7 +429,6 @@ public void reduceTest() {
     System.out.println(reduce);
 }
 ```
-
 
 ### 收集
 
