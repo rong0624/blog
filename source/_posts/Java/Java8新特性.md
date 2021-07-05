@@ -303,7 +303,8 @@ public static<T> Stream<T> generate(Supplier<T> s);
 
 ## Stream的中间操作
 
-多个中间操作可以连接起来形成一个流水线，除非流水线上触发终止操作，否则中间操作不会执行任何的处理！ 而在终止操作时一次性全部处理，称为“惰性求值”（类似mybtais的懒加载，redis的惰性删除，只有最后使用时才会真正执行）。
+多个中间操作可以连接起来形成一个流水线，除非流水线上触发终止操作，否则中间操作不会执行任何的处理!  
+而在终止操作时一次性全部处理，称为“惰性求值”（类似mybtais的懒加载，redis的惰性删除，只有最后使用时才会真正执行）。
 
 ### 筛选与切片
 
@@ -312,6 +313,8 @@ filter(Predicate p)：接收Lambda，从Stream流中排除某些元素。
 distinct()：筛选，通过Stream流所生成元素的 hashCode() 和 equals() 去除重复元素。
 
 limit(long maxSize)：截断Stream流，使其返回元素不超过指定数量。
+
+skip(long n)：跳过元素，返回扔掉前n个元素的流，若流中元素不足n个，则返回一个空流。与limit(n) 互补。
 
 案例：
 ```java
@@ -468,6 +471,21 @@ Local（本地）  简化了日期的处理，没有时区的问题。
 Zoned（时区）  通过制定的时区处理日期时间。  
 新的java.time包覆盖了所有处理日期，时间，日期/时间，时区，时刻（instants），过程（during）与时钟（clock）的操作。
 
+## 常用类简介
+
+Instat：用于表示时间上的一个点，表示一个时间戳（精确到纳秒）
+Period：用于计算日期间隔  
+Duration：用于计算时间间隔  
+
+LocalDate：表示日期  
+LcalTime：表示时间  
+LocalDateTime：表示日期+时间，相当于 LocalDate + LocalTime
+
+Zoneld：时区  
+ZonedDateTime：表示日期+时间+时区值
+
+DateTimeFormatter：用于日期时间的格式化
+
 ## 本地化日期时间API
 
 LocalDate：表示日期  
@@ -499,17 +517,19 @@ getHour()：获取小时
 getMinute()：获取分钟  
 getSecond()：获取秒
 
+## 时区日期时间API
+
 ## Instant 时间戳
 
-Java8新提供Instant获取秒数，用于表示一个时间戳（精确到纳秒）  
+Java8新提供Instant获取秒数，用于表示时间上的一个点，表示一个时间戳（精确到纳秒）
 如果只是为了获取秒数或毫秒数，可以使用System.currentTimeMillis()。
 
 用于“时间戳”的运算。它是以Unix元年(传统的设定为UTC时区1970年1月1日午夜时分)开始所经历的描述进行运算。
 
-Instant API方法：
-getEpochSecond()：获取秒数
-toEpochMilli()：获取毫秒数
-getNano()：获取纳秒数
+Instant API方法：  
+getEpochSecond()：获取秒数  
+toEpochMilli()：获取毫秒数  
+getNano()：获取纳秒数  
 System.currentTimeMillis()：获取时间戳，毫秒级别。
 
 ```java
@@ -526,11 +546,34 @@ System.out.println(instant);
 System.out.println(currentTimeMilli);
 ```
 
-## Duration 时间段
+## Period 日期间隔
 
-Java8新提供Duration来表示一个时间段。
+Java8新提供Period来表示一个日期段，日期间隔。
+
+Period API方法：  
+Between(from, to)：	获取两个日期的间隔，返回Period实例  
+getYears();			获取这段日期的相隔年数  
+getMonths(); 		获取单纯月份比较，相隔几月  
+getDays(); 			获取单纯天数比较，相隔几天
+
+```java
+// 1999-06-24
+LocalDate from = LocalDate.of(1999, Month.MAY, 24);
+// 2020-08-20
+LocalDate to = LocalDate.of(2020, Month.JULY, 20);
+
+Period period = Period.between(from, to);
+int years = period.getYears(); // 这段日期的相隔年数
+int months = period.getMonths(); // 单纯月份比较，相隔几月
+int days = period.getDays(); // 单纯天数比较，相隔几天
+```
+
+## Duration 时间间隔
+
+Java8新提供Duration来表示一个时间段，时间间隔。
 
 Duration API方法：  
+Between(from, to)：	获取两个日期的间隔，返回Duration实例  
 toDays()：		获取这段时间的天数  
 toHours()：		获取这段时间的小时  
 toMinutes()：		获取这段时间的分钟数  
@@ -562,6 +605,30 @@ public void durationTest() {
     System.out.println(milliSeconds);
     System.out.println(nanos);
 }
+```
+
+## 解析与格式化
+
+格式化时间：  
+Java8新提供DateTimeFormatter来格式化时间。
+
+解析时间：  
+使用时间类LocalDate、LocalTime自带的parse()方法进行解析时间。
+
+格式化时间demo：
+```java
+LocalDateTime now = LocalDateTime.now();
+String s1 = DateTimeFormatter.BASIC_ISO_DATE.format(now);
+String s2 = DateTimeFormatter.ISO_DATE_TIME.format(now);
+DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+String format = formatter.format(now);
+```
+
+解析时间Demo：
+```java
+LocalDate localDate = LocalDate.parse("2020-10-01");
+LocalDateTime localDateTime = LocalDateTime.parse("2020-10-01T15:15:15");
+LocalDateTime copyLocalDateTime = LocalDateTime.parse("2020-10-01 15:15:15", DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
 ```
 
 # 接口中的默认方法 与 静态方法
