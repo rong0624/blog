@@ -138,24 +138,19 @@ SET time_zone='+9:00';
 第二种：-- 注释文字  
 多行注释：/* 注释文字 */
 
-
-
 # 常用数据类型
 
 ## 数值型
 
-2.1.1.整型
+### 整型
+
+特点：  
+1）如果不设置无符号还是有符号，默认是有符号，如果想设置无符号，需要添加unsigned关键字  
+2）如果插入的数值超出了整型范围，会报out of range异常，并且插入临界值  
+3）如果不设置长度，会有默认的长度，长度代表了显示的最大宽度，如果不够用0在左边填充，但必须搭配zerofill使用！
 
 
-
-特点：
-（1）如果不设置无符号还是有符号，默认是有符号，如果想设置无符号，需要添加unsigned关键字
-（2）如果插入的数值超出了整型范围，会报out of range异常，并且插入临界值
-（4）如果不设置长度，会有默认的长度，长度代表了显示的最大宽度，如果不够用0在左边填充，但必须搭配zerofill使用！
-
-
-2.1.2.小数
-
+### 小数
 
 浮点型：
 Float(m, d)，double(m, d)
@@ -179,7 +174,7 @@ M和D都可以省略
 （3）定点型的精确度较高，如果要求插入数值的精度较高，如：货币运算等则考虑使用
 
 
-2.2.字符型
+## 字符型
 
 较短的文本：
 Char
@@ -210,7 +205,7 @@ Set类型：
 根据成员个数不同，存储所占的字节也不同
 
 
-2.3.日期型
+## 日期型
 
 
 总结：
@@ -237,6 +232,7 @@ Timestamp	4		1970-2038		受
 select 查询列表 from 表名
 
 ### 特点
+
 查询列表开源是字段，常量表达式，函数，也可以有多个。  
 查询结构是一个虚拟表。
 
@@ -255,14 +251,13 @@ Select * from 表名
 Select 常量值  
 注意：字符型和日期型常量值必须用单引号用起来，数值类不需要
 
-5.查询函数 
+5.查询函数   
 Select 函数名（实例参数）;
 
 6.查询表达式  
 Select 100*10;
 
-7.取别名  
-两种方式  
+7.取别名（两种方式）
 As  
 Select last_name as 姓名 from 表名  
 
@@ -288,14 +283,15 @@ Select ifnull(name, 0) from user
 Select isnull(name) from user  
 功能：拍的某个字段是否为null，如果是返回1，如果不是返回0
 
-
 ## 条件查询
 
 ### 语法
 
+```
 Select 查询列表  
 From 表名  
 Where 筛选条件
+```
 
 ### 筛选条件的分类
 
@@ -393,25 +389,31 @@ ORDER BY LENGTH(email) DESC, department_id ASC;
 
 LENGTH：  
 作用：获取参数的字节个数  
+```sql
 SELECT LENGTH('oyr');  
 SELECT LENGTH('欧阳荣');
+```
 
 
 CONCAT：  
 作用：拼接字符串  
+```sql
 SELECT CONCAT('abc', 'jkl');  
 SELECT CONCAT(first_name, last_name) out_put FROM employees;
+```
 
 
 UPPER：  
 作用：字符串变大写  
+```sql
 SELECT UPPER("asc");
-
+```
 
 Lower：  
 作用：字符串变小写
+```sql
 SELECT LOWER("ASC");
-
+```
 
 Substr:  
 作用：截取字符串，两种使用方式
@@ -442,26 +444,34 @@ SELECT TRIM('a' FROM 'aaaaaaaa欧阳aaa荣aaaaaa');
 
 Lpad：  
 作用：lpad 用指定的字符实现左填充指定长度  
+```sql
 SELECT LPAD('欧阳荣', 10, 'a') out_put;
+```
 
 Rpad：  
 作用：用指定的字符实现右填充指定长度  
+```sql
 SELECT LPAD('欧阳荣', 12, 'ab') out_put;
+```
 
 Replace：  
 作用：替换字符串  
+```sql
 SELECT REPLACE('赵吊彬是zz赵吊彬赵吊彬赵吊彬', '赵吊彬', '李执志');
+```
 
 Instr:  
 作用：获取子串第一次出现的索引
+```sql
 SELECT INSTR('欧阳荣多对多', '欧阳');
 结果为：1
+```
 
 ### 数学函数
 
 Round:  
 作用：四舍五入
-```
+```sql
 第一种使用：
 SELECT ROUND(1.65);
 结果：2
@@ -473,29 +483,38 @@ SELECT ROUND(1.657, 2);
 
 Ceil：  
 作用：向上取整  
+```sql
 SELECT CEIL(1.52);  
 结果：2
+```
 
 
 Floor：  
 作用：向下取整  
-SELECT FLOOR(9.99);  
+```sql
+SELECT FLOOR(9.99);
 结果：9
+```
 
 Truncate：  
 作用：截断  
+```sql
 SELECT TRUNCATE(10.19, 1);  
 结果：10.1
-
+```
 
 Mod：  
 作用：取余  
+```sql
 SELECT MOD(10, 3);  
 结果：1
+```
 
 Rand：  
 作用：获取随机数，返回0-1之间的小数  
+```sql
 SELECT RAND();
+```
 
 ### 日期函数
 
