@@ -41,14 +41,14 @@ yum install -y erlang
 
 3）查看erlang版本
 erl -v  
-![erlang版本](https://rong0624.github.io/images/MQ/RabbitMQ/erlang版本.png)   
+![erlang版本](https://rong0624.github.io/images/MQ/RabbitMQ/erlang查看版本.png)   
 显示这样代表安装成功
 
 ### 安装socat
 
 安装Erlang后直接安装RabbitMQ，需要安装socat。
 
-安装socat  
+安装socat：  
 yum install -y socat
 
 ### 安装RabbitMQ
@@ -163,8 +163,6 @@ RabbitMQ提供了6种消息模型。但是第6种其实是RPC，并不是MQ，�
 ## 订阅模式-Fanout
 
 ## 订阅模式-Topic
-
-
 
 RabbitMQ是由erlang语言开发，基于AMQP（Advanced Message Queue 高级消息队列协议）协议实现的消息队列，它是一种应用程序之间的通信方法，消息队列在分布式系统开发中应用非常广泛。
 
