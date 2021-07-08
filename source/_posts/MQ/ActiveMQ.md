@@ -3,10 +3,12 @@ title: ActiveMQ
 date: 2021-06-15 00:00:00
 author: 神奇的荣荣
 summary: ""
-tags: MQ
 categories: MQ
+tags: 
+    - MQ
+    - 中间件
+    - 消息中间件
 ---
-
 
 # ActiveMQ是什么
 
