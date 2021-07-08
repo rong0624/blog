@@ -1,5 +1,5 @@
 ---
-title: MySQL日志系统
+title: MySQL-日志系统
 date: 2021-06-22 00:00:00
 author: 神奇的荣荣
 summary: ""

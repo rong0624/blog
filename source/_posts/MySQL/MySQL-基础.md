@@ -1,5 +1,5 @@
 ---
-title: MySQL基础
+title: MySQL-基础
 date: 2021-06-20 00:00:00
 author: 神奇的荣荣
 summary: ""
