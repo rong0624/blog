@@ -5,9 +5,8 @@ author: 神奇的荣荣
 summary: ""
 categories: MQ
 tags: 
-    - MQ
-    - 中间件
-    - 消息中间件
+	- MQ
+	- 中间件
 ---
 
 # ActiveMQ是什么

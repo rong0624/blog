@@ -6,7 +6,6 @@ summary: ""
 categories: Java
 tags: 
     - java
-    - jdk
 ---
 
 # Java8新特性简介

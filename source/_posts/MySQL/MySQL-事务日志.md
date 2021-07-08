@@ -3,8 +3,10 @@ title: MySQL事务日志
 date: 2021-06-23 00:00:00
 author: 神奇的荣荣
 summary: ""
-tags: MySQL
 categories: MySQL
+tags: 
+	- MySQL
+	- 数据库
 ---
 
 # MySQL 事务日志（redolog & undolog）

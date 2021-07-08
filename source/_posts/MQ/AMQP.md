@@ -7,7 +7,6 @@ categories: MQ
 tags: 
     - MQ
     - 中间件
-    - 消息中间件
 ---
 
 # AMQP是什么

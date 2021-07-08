@@ -3,8 +3,10 @@ title: MySQL日志系统
 date: 2021-06-22 00:00:00
 author: 神奇的荣荣
 summary: ""
-tags: MySQL
 categories: MySQL
+tags: 
+	- MySQL
+	- 数据库
 ---
 
 # MySQL日志分类

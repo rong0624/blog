@@ -3,8 +3,10 @@ title: MySQL基础
 date: 2021-06-20 00:00:00
 author: 神奇的荣荣
 summary: ""
-tags: MySQL
 categories: MySQL
+tags: 
+	- MySQL
+	- 数据库
 ---
 
 Mysql数据库
