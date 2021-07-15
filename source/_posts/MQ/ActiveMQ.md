@@ -1,6 +1,6 @@
 ---
 title: ActiveMQ
-date: 2021-06-15 00:00:00
+date: 2021-06-16 00:00:00
 author: 神奇的荣荣
 summary: ""
 categories: MQ
