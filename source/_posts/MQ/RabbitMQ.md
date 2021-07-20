@@ -70,7 +70,7 @@ Channel，每个Channel代表一个会话任务。
 
 ## 核心部分
 
-![核心部分](https://rong0624.github.io/images/RabbitMQ/1626769058993.jpg)
+![核心部分](https://rong0624.github.io/images/MQ/RabbitMQ/1626769058993.jpg)
 
 # RabbitMQ的安装
 
@@ -180,7 +180,6 @@ service rabbitmq-server restart
 systemctl stop firewalld
 ## 关闭防火墙开机启动
 systemctl disable firewalld
-
 # 注意：一定要记住，在对应服务器（阿里云，腾讯云等）的安全组中开放15672端口
 
 # 访问web管理界面
@@ -190,6 +189,7 @@ http://106.52.180.14:15672
 成功访问：![RabbitMQ管理界面](https://rong0624.github.io/images/MQ/RabbitMQ/1626777167279.jpg)
 
 ### 授权账号和密码
+
 
 ### 小结
 
