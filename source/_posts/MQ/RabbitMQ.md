@@ -9,16 +9,6 @@ tags:
     - 中间件
 ---
 
-# 技术基础要求
-
-学习RabbitMQ所需要的基础知识点：
-* java基础
-* Maven
-* SpringBoot
-* Linux系统
-* 分布式集群思想
-* AMQP协议
-
 # RabbitMQ
 
 ## 简介
@@ -31,57 +21,81 @@ RabbitMQ 是一个消息中间件：它接受并转发消息。你可以把它�
 
 RabbitMQ官方地址：http://www.rabbitmq.com
 
-## 四大核心概念
+<!-- more -->
 
-### 生产者
+## 核心概念
 
-生产者：是一个向交换器发布消息的客户端应用程序（进程）。
+![AMQP模型](https://rong0624.github.io/images/MQ/amqp模型.png)
 
-### 消费者
+1）Broker  
+表示消息队列服务器实体（一个进程）。  
+一个server，接受客户端的连接，上线AMQP实体服务。  
 
-消费者：是一个从消息队列中取得消息的客户端应用程序（进程）。
+2）Connection  
+连接  
+应用程序与broker的网络连接，TCP/IP套接字连接。  
 
-### 消息队列
+3）Channel  
+消息通道  
+几乎所有的操作都在Channel中进行，Channel是进行消息读写的通道，客户端可以建立对多个  
+Channel，每个Channel代表一个会话任务。
 
-消息队列：存储消息，用于发送给消费者。  
+4）Message  
+消息，消息是不具名的，它由消息头和消息体组成。消息是不透明的，而消息头则由一系列的可选属性组成，这些属性包括routing-key（路由键）> ，priority（相对于其他消优先权），delivery-mode（指出该消息可能需要持久性存储）等
+
+5）Exchange  
+交换机，用来接受生产者发送的消息，并将这些消息路由转发到某个队列。
+
+6）Queue  
+消息队列，存储消息，用于发送给消费者。  
 它是消息的容器，也是消息的终点。一个消息可以投入多个队列。  
 消息一直在队列里面，等待消费者连接到这个队列将其取走。
 
-消息队列：是 RabbitMQ 内部使用的一种数据结构，尽管消息流经 RabbitMQ 和应用程序，但它们只能存
-储在队列中。队列仅受主机的内存和磁盘限制的约束，本质上是一个大的消息缓冲区。许多生产者可
-以将消息发送到一个队列，许多消费者可以尝试从一个队列接收数据。
+7）Binding  
+绑定，消息队列和交换器之间的关联。  
+一个绑定就是基于路由键将交换器和消息队列连接起来的路由规则，所以可以将交换器理解成一个由绑定构成的路由表。
 
-### 交换机
+8）Routing Key  
+路由关键字  
+一个消息头，交换机可以用这个消息头决定如何路由某条消息。
 
-交换机：用来接受生产者发送的消息，并将这些消息路由转发到某个队列。
+9）Publisher  
+消息生产者，是一个向交换器发布消息的客户端应用程序（进程）。
 
-交换机：是 RabbitMQ 非常重要的一个部件，一方面它接收来自生产者的消息，另一方面它将消息
-推送到队列中。交换机必须确切知道如何处理它接收到的消息，是将这些消息推送到特定队列还是推
-送到多个队列，亦或者是把消息丢弃，这个得有交换机类型决定。
+10）Consumer  
+消息消费者，是一个从消息队列中取得消息的客户端应用程序（进程）。
+
+11）Virtual Host  
+虚拟主机
 
 ## 核心部分
 
-## 名词介绍
-
+![核心部分](https://rong0624.github.io/images/RabbitMQ/1626769058993.jpg)
 
 # RabbitMQ的安装
+
+## 相关版本
+
+```
+erlang 21.3.x
+rabbitmq 3.8.8
+```
+
+Erlang rpm下载：  
+https://github.com/rabbitmq/erlang-rpm/releases
+
+Rabbitmq rpm下载：  
+https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.8.8/rabbitmq-server-3.8.8-1.el7.noarch.rpm
 
 ## Linux下安装
 
 ### 环境准备
 
-环境相关：  
-linux（CentOS 7.5）  
-erlang 22.x  
-rabbitmq 3.7.18
-
-<!-- more -->
-
-Erlang rpm下载：  
-https://github.com/rabbitmq/rabbitmq-server/releases/tag/v3.7.18
-
-Rabbitmq rpm下载：  
-https://github.com/rabbitmq/rabbitmq-server/tags?after=v3.8.0-rc.3
+```
+linux（CentOS 7.5）
+erlang 21.3.x
+rabbitmq 3.8.8
+```
 
 ### 安装Erlang
 
@@ -89,62 +103,96 @@ https://github.com/rabbitmq/rabbitmq-server/tags?after=v3.8.0-rc.3
 下载erlang时需要注意，要和rabbitmq版本兼容.
 
 1）erlang rpm下载：
-https://github.com/rabbitmq/rabbitmq-server/releases/tag/v3.7.18
-erlang-22.0.7-1.el7.x86_64.rpm
+https://github.com/rabbitmq/erlang-rpm/releases/download/v21.3.1/erlang-21.3.1-1.el7.x86_64.rpm
+erlang-21.3.1-1.el7.x86_64.rpm
 
 2）rpm上传到系统中，安装erlang 
-rpm -Uvh erlang-solutions-2.0-1.noarch.rpm 
-yum install -y erlang
+rpm -ivh erlang-21.3-1.el7.x86_64.rpm
 
 3）查看erlang版本
-erl -v  
-![erlang版本](https://rong0624.github.io/images/MQ/RabbitMQ/erlang查看版本.png)   
-显示这样代表安装成功
+erl -v
 
 ### 安装socat
 
 安装Erlang后直接安装RabbitMQ，需要安装socat。
 
 安装socat：  
-yum install -y socat
+yum install socat -y
 
 ### 安装RabbitMQ
 
+```
 1）rabbitmq rpm下载  
-https://github.com/rabbitmq/rabbitmq-server/tags?after=v3.8.0-rc.3
-rabbitmq-server-3.7.18-1.el7.noarch.rpm 
+https://github.com/rabbitmq/rabbitmq-server/releases/download/v3.8.8/rabbitmq-server-3.8.8-1.el7.noarch.rpm
 
-2）rpm上传到系统中，并安装rabbitmq   
-rpm -Uvh rabbitmq-server-3.7.18-1.el7.noarch.rpm   
-yum install rabbitmq-server -y
+2）rpm上传到系统中，并安装rabbitmq  
+rpm -ivh rabbitmq-server-3.8.8-1.el7.noarch.rpm 
 
 3）启动服务并测试  
-启动服务：  
-systemctl start rabbitmq-server 
-
-查看服务状态，如图：  
-systemctl status rabbitmq-server.service 
-
-4）常用命令
-```
 # 启动服务 
-systemctl start rabbitmq-server 
+service rabbitmq-server start
 
 # 查看服务状态
-systemctl status rabbitmq-server.service 
+service rabbitmq-server status
 
-# 开机自启动 
-systemctl enable rabbitmq-server 
+4）常用命令
+
+# 启动服务 
+service rabbitmq-server start 
+
+# 查看服务状态
+service rabbitmq-server status
 
 # 停止服务 
-systemctl stop rabbitmq-server
+service rabbitmq-server stop
+
+# 重启服务 
+service rabbitmq-server restart
+
+# 开机自动启动 
+chkconfig rabbitmq-server on
 ```
 
 ## Windos下安装
 
 ## Mac下安装
 
-# RabbitMQ管理界面
+## RabbitMQ管理界面及授权操作
+
+### RabbitMQ管理界面
+
+1）默认情况下，是没有安装web端的客户端插件，需要安装才可以生效。
+```shell
+rabbitmq-plugins enable rabbitmq_management
+```
+注意：管理界面会在15672端口提供服务
+
+2）安装完毕以后，重启服务即可
+```shell
+service rabbitmq-server restart
+```
+
+3）在浏览器访问  
+
+```
+# 关闭防火墙服务
+## 关闭防火墙
+systemctl stop firewalld
+## 关闭防火墙开机启动
+systemctl disable firewalld
+
+# 注意：一定要记住，在对应服务器（阿里云，腾讯云等）的安全组中开放15672端口
+
+# 访问web管理界面
+http://106.52.180.14:15672
+```
+
+成功访问：![RabbitMQ管理界面](https://rong0624.github.io/images/MQ/RabbitMQ/1626777167279.jpg)
+
+### 授权账号和密码
+
+### 小结
+
 
 # 入门案例
 
