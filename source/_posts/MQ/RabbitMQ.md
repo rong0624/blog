@@ -68,9 +68,18 @@ Channel，每个Channel代表一个会话任务。
 11）Virtual Host  
 虚拟主机
 
-## 核心部分
+## 消息模型
 
-![核心部分](https://rong0624.github.io/images/MQ/RabbitMQ/1626769058993.jpg)
+![消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/1626769058993.jpg)
+
+1. 基本消息模型（simple）
+2. 工作消息模型（work）
+3. 订阅模型-Fanout
+4. 订阅模式-Direct
+5. 订阅模型-Topic
+6. 参数模式
+
+**注意：订阅模型-Fanout，订阅模式-Direct，订阅模型-Topic都属于发布/订阅模型类型。**
 
 # RabbitMQ的安装
 
@@ -190,23 +199,53 @@ http://106.52.180.14:15672
 
 ### 授权账号和密码
 
+![guest登录](https://rong0624.github.io/images/MQ/RabbitMQ/20210721213622.png)  
+说明：rabbitmq有一个默认账号和密码是：guest/guest，但guest默认情况只能在localhost本机下访问，所以需要添加一个远程登录的用户。
+
+1）新增用户并授权：
+```
+#新增用户
+rabbitmqctl add_user admin 123
+
+#设置用户分配操作权限
+rabbitmqctl set_user_tags admin administrator
+
+#为用户添加资源权限
+#set_permissions [-p <vhostpath>] <user> <conf> <write> <read>
+#解释：用户 admin 具有 / 这个 virtual host 中所有资源的配置、写、读权限
+rabbitmqctl set_permissions -p "/" admin ".*" ".*" ".*"
+```
+
+2）使用admin登录管理页面
+登录成功：  
+![admin登录](https://rong0624.github.io/images/MQ/RabbitMQ/20210721215337.png)  
 
 ### 小结
 
+管理用户常见命令如下：
+```
+# 查看用户列表
+rabbitmqctl list_users
 
-# 入门案例
+# 新增账号[并设置密码]
+rabbitmqctl add_user 账号 密码
 
-## 快速入门（hello world）
+# 修改密码
+rabbitmqctl change_password 账号 新密码
 
-实现功能：  
-1）生产者发送消息，也就是要发送消息的程序  
-2）消费者消费消息，会一直等待消息到来。  
-3）mq接受到消息后，发送给消费者
+# 删除账号
+rabbitmqctl delete_user 账号
 
-如图：  
-![快速入门图](https://rong0624.github.io/images/MQ/RabbitMQ/快速入门图.png)
+# 给账号设置角色
+rabbitmqctl set_user_tags 账号 角色
 
-### 环境准备
+# 给账号设置权限
+rabbitmqctl set_permissions -p "/" 账号 ".*" ".*" ".*"
+```
+
+# hello world（简单消息模型 Simple）
+
+## 环境准备
 
 在学习RabbitMQ前必须掌握以下内容：  
 熟悉使用Java  
@@ -217,49 +256,223 @@ http://106.52.180.14:15672
 Jdk8  
 Maven3.x  
 Idea2019  
-RabbitMQ 3.7.18
+RabbitMQ 3.8.8
 
-### 创建一个Maven工程
+## 图解
 
-这里就不演示了，设置maven工程打包方式为jar包。
+![简单消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721223009.png)  
+在上图的模型中，有以下概念：
+1. 生产者，也就是要发送消息的程序
+2. 消费者：消息的接受者，会一直等待消息到来。
+3. 消息队列：图中红色部分。类似一个邮箱，可以缓存消息；生产者向其中投递消息，消费者从其中取出消息。
 
-### 导入依赖
+## 导入依赖
 
-pom.xml 导入依赖
-```xml
+```
+    <!-- rabbitmq 依赖客户端 -->
+    <dependency>
+        <groupId>com.rabbitmq</groupId>
+        <artifactId>amqp-client</artifactId>
+        <version>5.8.0</version>
+    </dependency>
 ```
 
-### 生产者发布消息
+## 消息生产者
 
-### 消费者消费消息（监听并消费消息）
+消息生产者：生产消息
 
-### 启动测试
+```java
+public class Producer {
 
+    private final static String queueName = "Hello";
 
-# RabbitMQ消息模型
+    public static void main(String[] args) throws Exception {
+        // 1.创建连接工厂
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("106.52.180.14");
+        factory.setPort(5672);
+        factory.setUsername("admin");
+        factory.setPassword("123");
 
-## 简介
+        // 2.创建连接
+        Connection connection = factory.newConnection();
 
-RabbitMQ提供了6种消息模型。但是第6种其实是RPC，并不是MQ，因此不予学习。那么也就剩下5种。但其实3、4、5这三种都属于订阅模型，只不过进行路由的方式不同。
+        // 3.创建通道（实现了自动 close 接口 自动关闭 不需要显示关闭）
+        Channel channel = connection.createChannel();
 
-![消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/消息模型.png)
+        /**
+         * 4.声明队列
+         * 参数1：队列名称
+         * 参数2：是否持久化队列，不持久化的队列重启访问后丢失
+         * 参数3：是否独占队列
+         * 参数4：是否自动删除队列，最后一个消息被消费后，该队列自动删除
+         * 参数5：其他参数
+         */
+        channel.queueDeclare(queueName, false, false, false, null);
 
-1）基本消息模式  
-2）工作模式  
-3）发布订阅模式  
-4）路由模式  
-5）主题模式  
-6）RPC模式
+        /**
+         * 5.发送消息
+         * 参数1：交换机（不指定，使用默认交换机）
+         * 参数2：路由键
+         * 参数3：其他参数
+         * 参数4：消息主体
+         */
+        String message = "hello world";
+        channel.basicPublish("", queueName, null, message.getBytes());
 
-## 基本模式
+        System.out.println("消息发送完成~");
+    }
 
-## 工作模式
+}
+```
 
-## 订阅模式-Direct
+## 消息消费者
 
-## 订阅模式-Fanout
+消息消费者：消费消息
 
-## 订阅模式-Topic
+```java
+public static void main(String[] args) throws Exception {
+    // 1.创建连接工厂
+    ConnectionFactory factory = new ConnectionFactory();
+    factory.setHost("106.52.180.14");
+    factory.setPort(5672);
+    factory.setUsername("admin");
+    factory.setPassword("123");
+
+    // 2.创建连接
+    Connection connection = factory.newConnection();
+
+    // 3.创建通道（实现了自动 close 接口 自动关闭 不需要显示关闭）
+    Channel channel = connection.createChannel();
+
+    /**
+        * 4.接受消息
+        * 参数1：监听的队列
+        * 参数2：是否自动应答
+        * 参数3：消费消息的程序
+        * 参数4：消费消息失败的程序
+        */
+    channel.basicConsume(queueName, true, (consumerTag, message) -> {
+        String msgBody = new String(message.getBody());
+        System.out.println("消费消息，消息内容：" + msgBody);
+    }, (consumerTag) -> {
+        System.out.println("消费消息失败了~");
+    });
+}
+```
+
+## 执行结果
+
+// TODO
+
+# 工作消息模型（work）
+
+## 图解
+
+![工作消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721224055.png)  
+当有多个消费者时，我们的消息会被哪个消费者消费呢，我们又该如何均衡消费者消费信息的多少呢？  
+主要有两种模式：
+1. 轮询分发：一个消费者一条，按均分配；
+2. 公平分发：根据消费者的消费能力进行公平分发，处理快的处理的多，处理慢的处理的少；
+
+工作队列(又称任务队列)的主要思想是避免立即执行资源密集型任务，而不得不等待它完成。  
+相反我们安排任务在之后执行。我们把任务封装为消息并将其发送到队列。  
+在后台运行的工作进程将弹出任务并最终执行作业。当有多个工作线程时，这些工作线程将一起处理这些任务。
+
+## 轮询分发
+
+### 抽取工具类
+
+```java
+public class RabbitMqUtils {
+
+    public static Channel getChannel() throws Exception {
+        // 1.创建连接工厂
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("106.52.180.14");
+        factory.setPort(5672);
+        factory.setUsername("admin");
+        factory.setPassword("123");
+
+        // 2.创建连接
+        Connection connection = factory.newConnection();
+
+        // 3.创建通道（实现了自动 close 接口 自动关闭 不需要显示关闭）
+        Channel channel = connection.createChannel();
+
+        return channel;
+    }
+
+}
+```
+
+### 生产者
+
+```java
+public class Producer {
+
+    private final static String QUEUE_NAME = "work_queue";
+
+    public static void main(String[] args) throws Exception {
+        // 获取通道
+        Channel channel = RabbitMqUtils.getChannel();
+
+        /**
+         * 声明队列
+         * 参数1：队列名称
+         * 参数2：是否持久化队列，不持久化的队列重启访问后丢失
+         * 参数3：是否独占队列
+         * 参数4：是否自动删除队列，最后一个消息被消费后，该队列自动删除
+         * 参数5：其他参数
+         */
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+
+        // 发送消息
+        Scanner scanner = new Scanner(System.in);
+        while (scanner.hasNext()) {
+            String message = scanner.next();
+            channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+            System.out.println("发送消息：" + message);
+        }
+    }
+
+}
+
+```
+
+### 消费者
+
+```java
+public class Consumer {
+
+    private final static String QUEUE_NAME = "work_queue";
+
+    public static void main(String[] args) throws Exception {
+        // 获取通道
+        Channel channel = RabbitMqUtils.getChannel();
+
+        // 监听队列，获取消息
+        channel.basicConsume(QUEUE_NAME, true, (consumerTag, message) -> {
+            String msgBody = new String(message.getBody());
+            System.out.println("消费消息，消息内容：" + msgBody);
+        }, (consumerTag) -> {
+            System.out.println("消费消息失败了~");
+        });
+    }
+
+}
+```
+
+### 执行结果
+
+启动消费者进行发送消息。
+
+启动两个消息者线程，模拟两个消费者在监听队列消息消息：  
+![消费者1](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232358.png)  
+![消费者2](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232422.png)  
+
+通过程序执行发现生产者总共发送 4 个消息，消费者 1 和消费者 2 分别分得两个消息，并且是按照有序的一个接收一次消息：  
+![工作消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232422.png)  
 
 # 整合SpringBoot
 
@@ -268,10 +481,3 @@ RabbitMQ提供了6种消息模型。但是第6种其实是RPC，并不是MQ，�
 ## 订阅模式-Fanout
 
 ## 订阅模式-Topic
-
-RabbitMQ是由erlang语言开发，基于AMQP（Advanced Message Queue 高级消息队列协议）协议实现的消息队列，它是一种应用程序之间的通信方法，消息队列在分布式系统开发中应用非常广泛。
-
-RabbitMQ官方地址：
-http://www.rabbitmq.com
-
-RabbitMQ是一个开源的遵循 AMQP协议实现的基于 Erlang语言编写，支持多种客户端（语言），用于在分布式系统中存储消息，转发消息，具有高可用，高可扩性，易用性等特征入门及安装。

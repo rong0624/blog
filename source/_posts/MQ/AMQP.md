@@ -68,13 +68,21 @@ Channel，每个Channel代表一个会话任务。
 
 ***
 
-## 工作过程
+## 工作流程
+
+### 生产者工作流程
+
+![生产者工作流程](https://rong0624.github.io/images/MQ/1626761231258.jpg)
 
 生产者发布消息流程：  
 1、生产者和Broker建立TCP连接。  
 2、生产者和Broker建立通道。  
 3、生产者通过通道发送消息给Broker，由Exchange将消息进行转发。  
 4、Exchange将消息转发到指定的Queue（队列）  
+
+### 消费者工作流程
+
+![消费者工作流程](https://rong0624.github.io/images/MQ/1626761231333.jpg)
 
 消费者消费消息流程：  
 1、消费者和Broker建立TCP连接  
@@ -83,8 +91,6 @@ Channel，每个Channel代表一个会话任务。
 4、当有消息到达Queue时Broker默认将消息推送给消费者。  
 5、消费者接收到消息。  
 6、ack回复  
-
-***
 
 # Exchange交换机
 
