@@ -1,5 +1,5 @@
 ---
-title: RabbitMQ
+title: RabbitMQ-基础
 date: 2021-07-13 00:00:00
 author: 神奇的荣荣
 summary: ""
@@ -77,7 +77,6 @@ Channel，每个Channel代表一个会话任务。
 3. 订阅模型-Fanout
 4. 订阅模式-Direct
 5. 订阅模型-Topic
-6. 参数模式
 
 **注意：订阅模型-Fanout，订阅模式-Direct，订阅模型-Topic都属于发布/订阅模型类型。**
 
@@ -243,7 +242,7 @@ rabbitmqctl set_user_tags 账号 角色
 rabbitmqctl set_permissions -p "/" 账号 ".*" ".*" ".*"
 ```
 
-# hello world（简单消息模型 Simple）
+# hello world（简单消息模型）
 
 ## 环境准备
 
@@ -305,7 +304,7 @@ public class Producer {
          * 参数1：队列名称
          * 参数2：是否持久化队列，不持久化的队列重启访问后丢失
          * 参数3：是否独占队列
-         * 参数4：是否自动删除队列，最后一个消息被消费后，该队列自动删除
+         * 参数4：是否自动删除队列，当最后一个消费者退订后即被删除
          * 参数5：其他参数
          */
         channel.queueDeclare(queueName, false, false, false, null);
@@ -331,34 +330,41 @@ public class Producer {
 消息消费者：消费消息
 
 ```java
-public static void main(String[] args) throws Exception {
-    // 1.创建连接工厂
-    ConnectionFactory factory = new ConnectionFactory();
-    factory.setHost("106.52.180.14");
-    factory.setPort(5672);
-    factory.setUsername("admin");
-    factory.setPassword("123");
+public class Consumer {
 
-    // 2.创建连接
-    Connection connection = factory.newConnection();
+    private final static String queueName = "Hello";
 
-    // 3.创建通道（实现了自动 close 接口 自动关闭 不需要显示关闭）
-    Channel channel = connection.createChannel();
+    public static void main(String[] args) throws Exception {
+        // 1.创建连接工厂
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("106.52.180.14");
+        factory.setPort(5672);
+        factory.setUsername("admin");
+        factory.setPassword("123");
 
-    /**
-        * 4.接受消息
-        * 参数1：监听的队列
-        * 参数2：是否自动应答
-        * 参数3：消费消息的程序
-        * 参数4：消费消息失败的程序
-        */
-    channel.basicConsume(queueName, true, (consumerTag, message) -> {
-        String msgBody = new String(message.getBody());
-        System.out.println("消费消息，消息内容：" + msgBody);
-    }, (consumerTag) -> {
-        System.out.println("消费消息失败了~");
-    });
+        // 2.创建连接
+        Connection connection = factory.newConnection();
+
+        // 3.创建通道（实现了自动 close 接口 自动关闭 不需要显示关闭）
+        Channel channel = connection.createChannel();
+
+        /**
+         * 4.接受消息
+         * 参数1：监听的队列
+         * 参数2：是否自动应答
+         * 参数3：消费消息的程序
+         * 参数4：消费消息失败的程序
+         */
+        channel.basicConsume(queueName, true, (consumerTag, message) -> {
+            String msgBody = new String(message.getBody());
+            System.out.println("消费消息，消息内容：" + msgBody);
+        }, (consumerTag) -> {
+            System.out.println("消费消息失败了~");
+        });
+    }
+
 }
+
 ```
 
 ## 执行结果
@@ -422,7 +428,7 @@ public class Producer {
          * 参数1：队列名称
          * 参数2：是否持久化队列，不持久化的队列重启访问后丢失
          * 参数3：是否独占队列
-         * 参数4：是否自动删除队列，最后一个消息被消费后，该队列自动删除
+         * 参数4：是否自动删除队列，当最后一个消费者退订后即被删除
          * 参数5：其他参数
          */
         channel.queueDeclare(QUEUE_NAME, false, false, false, null);
@@ -471,13 +477,25 @@ public class Consumer {
 ![消费者1](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232358.png)  
 ![消费者2](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232422.png)  
 
-通过程序执行发现生产者总共发送 4 个消息，消费者 1 和消费者 2 分别分得两个消息，并且是按照有序的一个接收一次消息：  
+通过程序执行发现生产者总共发送 4 个消息，  
+消费者 1 和消费者 2 分别分得两个消息，并且是按照有序的一个接收一次消息：  
 ![工作消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232422.png)  
+
+## 公平分发（能者多劳）
+
+
+
+# 交换机
+
+# 死信队列
+
+# 延迟队列
+
 
 # 整合SpringBoot
 
-## 订阅模式-Direct 
-
 ## 订阅模式-Fanout
+
+## 订阅模式-Direct
 
 ## 订阅模式-Topic
