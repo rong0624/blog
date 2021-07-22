@@ -75,7 +75,7 @@ Channel，每个Channel代表一个会话任务。
 1. 基本消息模型（simple）
 2. 工作消息模型（work）
 3. 订阅模型-Fanout
-4. 订阅模式-Direct
+4. 订阅模型-Direct
 5. 订阅模型-Topic
 
 **注意：订阅模型-Fanout，订阅模式-Direct，订阅模型-Topic都属于发布/订阅模型类型。**
@@ -267,7 +267,7 @@ RabbitMQ 3.8.8
 
 ## 导入依赖
 
-```
+```xml
     <!-- rabbitmq 依赖客户端 -->
     <dependency>
         <groupId>com.rabbitmq</groupId>
@@ -283,7 +283,7 @@ RabbitMQ 3.8.8
 ```java
 public class Producer {
 
-    private final static String queueName = "Hello";
+    private final static String QUEUE_NAME = "Hello";
 
     public static void main(String[] args) throws Exception {
         // 1.创建连接工厂
@@ -307,7 +307,7 @@ public class Producer {
          * 参数4：是否自动删除队列，当最后一个消费者退订后即被删除
          * 参数5：其他参数
          */
-        channel.queueDeclare(queueName, false, false, false, null);
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
 
         /**
          * 5.发送消息
@@ -317,7 +317,7 @@ public class Producer {
          * 参数4：消息主体
          */
         String message = "hello world";
-        channel.basicPublish("", queueName, null, message.getBytes());
+        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
 
         System.out.println("消息发送完成~");
     }
@@ -332,7 +332,7 @@ public class Producer {
 ```java
 public class Consumer {
 
-    private final static String queueName = "Hello";
+    private final static String QUEUE_NAME = "Hello";
 
     public static void main(String[] args) throws Exception {
         // 1.创建连接工厂
@@ -355,7 +355,7 @@ public class Consumer {
          * 参数3：消费消息的程序
          * 参数4：消费消息失败的程序
          */
-        channel.basicConsume(queueName, true, (consumerTag, message) -> {
+        channel.basicConsume(QUEUE_NAME, true, (consumerTag, message) -> {
             String msgBody = new String(message.getBody());
             System.out.println("消费消息，消息内容：" + msgBody);
         }, (consumerTag) -> {
@@ -364,12 +364,28 @@ public class Consumer {
     }
 
 }
-
 ```
 
 ## 执行结果
 
-// TODO
+1）启动生产者，发送消息
+
+启动生产者，发送消息：  
+![生产者发送消息](https://rong0624.github.io/images/MQ/RabbitMQ/1626949235794.jpg)
+
+查看管理页面，可以发现：新建了一个队列：Hello，并且队列里有一条消息等待读取：  
+![管理页面，查看队列](https://rong0624.github.io/images/MQ/RabbitMQ/1626949728101.jpg)
+
+进入队列详情，还可以看到消息主题内容：  
+![管理页面，查看消息主体内容](https://rong0624.github.io/images/MQ/RabbitMQ/1626949629441.jpg)
+
+2）启动消费者，消费消息
+
+启动消费者，消费消息：  
+![消费者消费消息](https://rong0624.github.io/images/MQ/RabbitMQ/1626949896540.jpg)
+
+查看管理页面，可以发现：Hello队列，消息已经被消费了：  
+![管理页面，查看队列](https://rong0624.github.io/images/MQ/RabbitMQ/1626949947003.jpg)
 
 # 工作消息模型（work）
 
@@ -457,7 +473,13 @@ public class Consumer {
         // 获取通道
         Channel channel = RabbitMqUtils.getChannel();
 
-        // 监听队列，获取消息
+        /**
+         * 接受消息
+         * 参数1：监听的队列
+         * 参数2：是否自动应答
+         * 参数3：消费消息的程序
+         * 参数4：消费消息失败的程序
+         */
         channel.basicConsume(QUEUE_NAME, true, (consumerTag, message) -> {
             String msgBody = new String(message.getBody());
             System.out.println("消费消息，消息内容：" + msgBody);
@@ -481,7 +503,57 @@ public class Consumer {
 消费者 1 和消费者 2 分别分得两个消息，并且是按照有序的一个接收一次消息：  
 ![工作消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232422.png)  
 
-## 公平分发（能者多劳）
+## 不公平分发（能者多劳）
+
+以上RabbitMQ 分发消息采用的轮询分发，但是在某种场景下这种策略并不是很好。  
+比方说：有两个消费者在处理任务，其中有个消费者 1 处理任务的速度非常快，而另外一个消费者 2 处理速度却很慢，这个时候我们还是采用轮询分发的话，这处理速度快的这个消费者很大一部分时间处于空闲状态，而处理慢的那个消费者一直在干活，这种分配方式在这种情况下其实就不太好，但是 RabbitMQ 并不知道这种情况，它依然很公平的进行分发。
+
+现在想要做的是：不公平分发，消费越快的人，消费的越多，怎么实现呢？
+```java
+Integer prefetchCount = 1
+channel.basicQos(prefetchCount);
+```
+
+![不公平分发图](https://rong0624.github.io/images/MQ/RabbitMQ/1626919721516.jpg)
+
+解释：如果这个任务我还没有处理完或者我还没有应答你，你先别分配给我，我目前只能处理一个任务，然后 rabbitmq 就会把该任务分配给没有那么忙的那个空闲消费者，当然如果所有的消费者都没有完
+成手上任务，队列还在不停的添加新任务，队列有可能就会遇到队列被撑满的情况，这个时候就只能添加新的 worker 或者改变其他存储任务的策略。
+
+## 消息应答
+
+### 概念
+
+消费者完成一个任务可能需要一段时间，如果其中一个消费者处理一个长的任务并仅只完成了部分突然它挂掉了，会发生什么情况。RabbitMQ 一旦向消费者传递了一条消息，便立即将该消息标记为删除。在这种情况下，突然有个消费者挂掉了，我们将丢失正在处理的消息。以及后续发送给该消费这的消息，因为它无法接收到。
+
+为了保证消息在发送过程中不丢失，rabbitmq 引入消息应答机制，消息应答就是：消费者在接收到消息并且处理该消息之后，告诉 rabbitmq 它已经处理了，rabbitmq 可以把该消息删除了。
+
+rabbitmq有两种消息应答机制：
+* 自动应答
+* 手动应答
+
+### 自动应答
+
+消息发送后立即被认为已经传送成功，这种模式需要在高吞吐量和数据传输安全性方面做权衡，因为这种模式如果消息在接收到之前，消费者那边出现连接或者 channel 关闭，那么消息就丢失了,当然另一方面这种模式消费者那边可以传递过载的消息，没有对传递的消息数量进行限制，当然这样有可能使得消费者这边由于接收太多还来不及处理的消息，导致这些消息的积压，最终使得内存耗尽，最终这些消费者线程被操作系统杀死，所以这种模式仅适用在消费者可以高效并以某种速率能够处理这些消息的情况下使用。
+
+注意：之前的测试案例都是自动应答。
+
+### 自动应答存在的问题
+
+### 手动应答方法
+
+* Channel.basicAck(long, boolean)
+    - 用于肯定确认，RabbitMQ 已知道该消息并且成功的处理消息，可以将其丢弃了
+* Channel.basicNack(long, boolean, boolean)
+    - 用于否定确认
+* Channel.basicReject(long, boolean)
+    - 用于否定确认
+    - 与 Channel.basicNack 相比少一个参数，不处理该消息了直接拒绝，可以将其丢弃了
+
+### Multiple 的解释
+
+### 手动应答
+
+
 
 
 
