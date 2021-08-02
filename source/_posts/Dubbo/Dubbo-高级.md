@@ -288,8 +288,6 @@ public class Provider {
 
 结论：Hystrix有强大的容错能力，无论是超时还是错误，都可以调用备用方法返回。
 
+# RPC原理
+
 # Dubbo原理
-
-## RPC原理
-
-## Dubbo原理
