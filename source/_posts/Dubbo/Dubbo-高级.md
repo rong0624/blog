@@ -13,53 +13,9 @@ tags:
 
 ## 集群
 
-Dubbo集群很简单，只是需要对服务提供者的配置文件进行修改，配置文件中的application.name相同，Dubbo则会认为是同一集群。
+Dubbo集群很简单，只是需要对服务提供者的配置文件进行修改，配置文件中的```dubbo.application.name```相同，Dubbo则会认为是同一集群。
 
 <!-- more -->
-
-## 集群容错
-
-集群调用失败时，Dubbo 提供了多种容错方案，缺省为 failover 重试。
-
-### 集群容错
-
-```
-Failover Cluster
-失败自动切换，当出现失败，重试其它服务器。通常用于读操作，但重试会带来更长延迟。可通过 retries="2" 来设置重试次数(不含第一次)。
-
-重试次数配置如下：
-<dubbo:service retries="2" />
-或
-<dubbo:reference retries="2" />
-或
-<dubbo:reference>
-    <dubbo:method name="findFoo" retries="2" />
-</dubbo:reference>
-
-Failfast Cluster
-快速失败，只发起一次调用，失败立即报错。通常用于非幂等性的写操作，比如新增记录。
-
-Failsafe Cluster
-失败安全，出现异常时，直接忽略。通常用于写入审计日志等操作。
-
-Failback Cluster
-失败自动恢复，后台记录失败请求，定时重发。通常用于消息通知操作。
-
-Forking Cluster
-并行调用多个服务器，只要一个成功即返回。通常用于实时性要求较高的读操作，但需要浪费更多服务资源。可通过 forks="2" 来设置最大并行数。
-
-Broadcast Cluster
-广播调用所有提供者，逐个调用，任意一台报错则报错 [2]。通常用于通知所有提供者更新缓存或日志等本地资源信息。
-```
-
-### 集群模式配置
-
-按照以下示例在服务提供方和消费方配置集群模式
-```
-<dubbo:service cluster="failsafe" />
-或
-<dubbo:reference cluster="failsafe" />
-```
 
 ## 负债均衡策略
 
@@ -124,6 +80,72 @@ ConsistentHash LoadBalance
 </dubbo:reference>
 ```
 
+## 集群容错
+
+集群调用失败时，Dubbo 提供了多种容错方案，缺省为 failover 重试。
+
+### 集群容错
+
+```
+Failover Cluster
+失败自动切换，当出现失败，重试其它服务器。通常用于读操作，但重试会带来更长延迟。可通过 retries="2" 来设置重试次数(不含第一次)。
+
+重试次数配置如下：
+<dubbo:service retries="2" />
+或
+<dubbo:reference retries="2" />
+或
+<dubbo:reference>
+    <dubbo:method name="findFoo" retries="2" />
+</dubbo:reference>
+
+Failfast Cluster
+快速失败，只发起一次调用，失败立即报错。通常用于非幂等性的写操作，比如新增记录。
+
+Failsafe Cluster
+失败安全，出现异常时，直接忽略。通常用于写入审计日志等操作。
+
+Failback Cluster
+失败自动恢复，后台记录失败请求，定时重发。通常用于消息通知操作。
+
+Forking Cluster
+并行调用多个服务器，只要一个成功即返回。通常用于实时性要求较高的读操作，但需要浪费更多服务资源。可通过 forks="2" 来设置最大并行数。
+
+Broadcast Cluster
+广播调用所有提供者，逐个调用，任意一台报错则报错 [2]。通常用于通知所有提供者更新缓存或日志等本地资源信息。
+```
+
+### 集群容错配置
+
+按照以下示例在服务提供方和消费方配置集群模式
+```
+<dubbo:service cluster="failsafe" />
+或
+<dubbo:reference cluster="failsafe" />
+```
+
+## 服务降级
+
+### 服务降级概念
+
+当服务器压力剧增的情况下，根据当前业务情况及流量对一些服务和页面有策略的降级（返回一个友好提示给客户端，不去执行主业务逻辑，调用fallBack本地方法），以此释放服务器资源以保证核心任务的正常运行。
+
+### 服务降级配置
+
+可以通过服务降级功能临时屏蔽某个出错的非关键服务，并定义降级后的返回策略。
+
+向注册中心写入动态配置覆盖规则：
+
+```java
+RegistryFactory registryFactory = ExtensionLoader.getExtensionLoader(RegistryFactory.class).getAdaptiveExtension();
+Registry registry = registryFactory.getRegistry(URL.valueOf("zookeeper://10.20.153.10:2181"));
+registry.register(URL.valueOf("override://0.0.0.0/com.foo.BarService?category=configurators&dynamic=false&application=foo&mock=force:return+null"));
+```
+
+解释：
+- mock=force:return+null 表示消费方对该服务的方法调用都直接返回 null 值，不发起远程调用。用来屏蔽不重要服务不可用时对调用方的影响。
+- 还可以改为 mock=fail:return+null 表示消费方对该服务的方法调用在失败后，再返回 null 值，不抛异常。用来容忍不重要服务不稳定时对调用方的影响。
+
 ## 注册中心宕机与Dubbo直连
 
 ### 注册中心宕机问题
@@ -171,9 +193,103 @@ UserService userService;
 
 服务熔断机制和服务降级是一起使用。
 
+## Hystrix简介
+
+Hystrix 旨在通过控制那些访问远程系统、服务和第三方库的节点，从而对延迟和故障提供更强大的容错能力。Hystrix具备拥有回退机制和断路器功能的线程和信号隔离，请求缓存和请求打包，以及监控和配置等功能。
+
+## 整合Hystrix
+
+### 提供者改造
+
+1）导入hystrix依赖（spring boot官方提供了对hystrix的集成）  
+直接在pom.xml里加入依赖：  
+```xml
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+        <version>2.2.9.RELEASE</version>
+    </dependency>
+```
+注意：需要找到版本合适的netflix导入（springboot2.2.4.RELEASE & hystrix2.2.9.RELEASE & dubbo2.7.7）
+
+2）修改代码  
+修改userServiceImpl  
+```java
+@DubboService
+public class UserServiceImpl implements UserService {
+
+    public final static Map<String, List<UserAddressDto>> map;
+
+    static {
+        List<UserAddressDto> list1 = Stream.of(new UserAddressDto(1, "1", "江西赣州", "欧阳", "152*****", false),
+                new UserAddressDto(2, "1", "广东深圳", "欧阳", "152*****", true),
+                new UserAddressDto(1, "1", "浙江上海", "欧阳", "152*****", false))
+                .collect(Collectors.toList());
+        List<UserAddressDto> list2 = Stream.of(new UserAddressDto(3, "2", "江西赣州", "东华", "152*****", false),
+                new UserAddressDto(4, "2", "广东深圳", "东华", "152*****", true),
+                new UserAddressDto(5, "2", "浙江上海", "东华", "152*****", false))
+                .collect(Collectors.toList());
+
+        List<UserAddressDto> list3 = Stream.of(new UserAddressDto(6, "3", "江西赣州", "异常用户", "152*****", false))
+                .collect(Collectors.toList());
+        map = new HashMap<>();
+        map.put("1", list1);
+        map.put("2", list2);
+        map.put("3", list3);
+    }
+
+    // 方法出现异常后，调用其他方法进行返回
+    @HystrixCommand(fallbackMethod = "getUserAddressError")
+    @Override
+    public List<UserAddressDto> getUserAddress(String userId) {
+        if (Math.random() > 0.5) {
+            throw new RuntimeException("错误的参数");
+        }
+        return map.get(userId);
+    }
+
+    private List<UserAddressDto> getUserAddressError(String userId) {
+        return map.get("3");
+    }
+}
+```
+
+3）开启hystrix  
+在Application类上增加@EnableHystrix来开启：
+```java
+// 开启Hystrix，进行代理
+@EnableHystrix
+// 开启Dubbo，扫描Dubbo注解（扫描当前包和子包内容）
+@EnableDubbo
+@SpringBootApplication
+public class Provider {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Provider.class, args);
+    }
+
+}
+```
+
+### 消费者改造
+
+当前是在服务提供者做熔断，所以消费者不需要改造。
+（如果需要在消费者中做熔断，改造步骤和提供者一致）
+
+### 启动查看效果
+
+启动提供者和消费者，访问：http://localhost:8080/dubbo
+
+正常访问：  
+![服务熔断正常访问](https://rong0624.github.io/images/Dubbo/1627894884676.jpg)
+
+异常访问：  
+![服务熔断异常访问](https://rong0624.github.io/images/Dubbo/1627894974462.jpg)
+
+结论：Hystrix有强大的容错能力，无论是超时还是错误，都可以调用备用方法返回。
+
 # Dubbo原理
 
 ## RPC原理
 
 ## Dubbo原理
-
