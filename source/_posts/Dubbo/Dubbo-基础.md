@@ -39,17 +39,6 @@ tags:
 当服务越来越多，容量的评估，小服务资源的浪费等问题逐渐显现，此时需增加一个调度中心基于访问压力实时管理集群容量，提高集群利用率。 
 此时，用于 提高机器利用率的资源调度和治理中心(SOA) 是关键。
 
-## RPC
-
-什么叫PRC：  
-RPC【Remote Procedure Call】是指远程过程调用，是一种进程间通信方式，他是一种技术的思想，而不是规范。它允许程序调用另一个地址空间（通常是共享网络的另一台机器上）的过程或函数，而不用程序员显式编码这个远程调用的细节。即程序员无论是调用本地的还是远程的函数，本质上编写的调用代码基本相同。
-
-
-RPC原理：  
-![rpc通讯](https://rong0624.github.io/images/Dubbo/rpc通讯.png)  
-![rpc序列化](https://rong0624.github.io/images/Dubbo/rpc序列化.png)  
-RPC两个核心模块：通讯，序列化。
-
 # Dubbo入门
 
 ## 简介
@@ -146,7 +135,7 @@ Dubbo 架构具有以下几个特点，分别是连通性、健壮性、伸缩�
 下图是未来可能的一种架构：  
 ![dubbo未来可能的架构](https://rong0624.github.io/images/Dubbo/1627982970159.jpg)
 
-# Dubbo Hello world
+# Hello world
 
 ## 环境准备
 
@@ -412,62 +401,6 @@ public class Consumer {
 @DubboReference  
 使用dubbo提供的DubboReference注解，指定服务消费者引用远程服务
 
-## Dubbo支持哪些协议
-
-### Dubbo协议
-
-Dubbo协议采用单一长连接和NIO异步通讯，适合于小数据量大并发的服务调用，以及服务消费者机器数远大于服务提供者机器数的情况。Dubbo缺省协议不适合传送大数据量的服务，比如传文件，传视频等，除非请求量很低。
-Dubbo默认使用Dubbo协议；
-
-### Hessian协议
-
-Hessian协议用于集成Hessian的服务，Hessian底层采用Http通讯，采用Servlet暴露服务，Dubbo缺省内嵌Jetty作为服务器实现。Hessian是Caucho开源的一个RPC框架：http://hessian.caucho.com，其通讯效率高于WebService和Java自带的序列化。
-
-基于Hessian的远程调用协议:
-连接个数：多连接  
-连接方式：短连接  
-传输协议：HTTP  
-传输方式：同步传输  
-序列化：Hessian二进制序列化  
-适用范围：传入传出参数数据包较大，提供者比消费者个数多，提供者压力较大，可传文件。  
-适用场景：页面传输，文件传输，或与原生hessian服务互操作
-
-### RMI协议
-
-采用JDK标准的java.rmi.*实现，采用阻塞式短连接和JDK标准序列化方式
-
-基于RMI协议的远程调用协议:  
-连接个数：多连接  
-连接方式：短连接  
-传输协议：TCP  
-传输方式：同步传输
-序列化：Java标准二进制序列化  
-适用范围：传入传出参数数据包大小混合，消费者与提供者个数差不多，可传文件。  
-适用场景：常规远程服务方法调用，与原生RMI服务互操作
-
-### HTTP协议
-
-此协议采用 spring 的HttpInvoker的功能实现，
-
-基于HTTP的远程调用协议:  
-连接个数：多个  
-连接方式：长连接  
-连接协议：http  
-传输方式：同步传输  
-序列化：表单序列化  
-适用范围：传入传出参数数据包大小混合，提供者比消费者个数多，可用浏览器查看，可用表单或URL传入参数，暂不支持传文件。  
-适用场景：需同时给应用程序和浏览器JS使用的服务。
-
-## Dubbo支持哪些注册中心
-
-![支持的注册中心](https://rong0624.github.io/images/Dubbo/1627983532373.jpg)  
-Zookeeper、Redis、Multicast、Simple 都可以作为Dubbo的注册中心，Dubbo官方推荐使用 Zookeeper。
-
-## Dubbo支持哪些通讯框架
-
-![支持的通讯框架](https://rong0624.github.io/images/Dubbo/1627983850471.jpg)  
-Mina、Grizzly、Netty 都可以作为Dubbo的通讯框架，Dubbo推荐并默认使用 Netty。
-
 # 整合Spring Boot
 
 基于hello world项目改造成spring boot项目。
@@ -691,9 +624,8 @@ dubbo.protocol.name=dubbo
 dubbo.application.nam：就是服务名，不能和其他服务提供者重复  
 dubbo.registry.protocol：指定注册中心协议  
 dubbo.registry.address：指定注册中心访问地址（地址加端口号）  
-dubbo.protocol.name：固定是dubbo，不要改  
+dubbo.protocol.name：指定使用协议，默认是dubbo  
 dubbo.protocol.port：指定服务提供者暴露的端口
-
 
 # Dubbo 配置详解
 
@@ -875,3 +807,82 @@ mvn clean package -Dmaven.test.skip=true
 java -jar dubbo-admin-0.0.1-SNAPSHOT.jar  
 使用root/root登录  
 ![dubbo监控中心页面](https://rong0624.github.io/images/Dubbo/dubbo监控中心页面.png)
+
+# Dubbo 成熟度
+
+## Dubbo支持哪些协议
+
+### Dubbo协议
+
+Dubbo协议采用单一长连接和NIO异步通讯，适合于小数据量大并发的服务调用，以及服务消费者机器数远大于服务提供者机器数的情况。Dubbo缺省协议不适合传送大数据量的服务，比如传文件，传视频等，除非请求量很低。
+Dubbo默认使用Dubbo协议；
+
+基于Dubbo的远程调用协议：
+连接个数：单连接
+连接方式：长连接  
+传输协议：TCP  
+传输方式：NIO异步传输  
+序列化：Hessian二进制序列化  
+适用范围：传入传出参数数据包较小（建议小于100K），消费者比提供者个数多，单一消费者无法压满提供者，尽量不要用dubbo协议传输大文件或超大字符串。  
+适用场景：常规远程服务方法调用
+
+### Hessian协议
+
+Hessian协议用于集成Hessian的服务，Hessian底层采用Http通讯，采用Servlet暴露服务，Dubbo缺省内嵌Jetty作为服务器实现。  
+Hessian是Caucho开源的一个RPC框架：http://hessian.caucho.com，其通讯效率高于WebService和Java自带的序列化。
+
+基于Hessian的远程调用协议:
+连接个数：多连接  
+连接方式：短连接  
+传输协议：HTTP  
+传输方式：同步传输  
+序列化：Hessian二进制序列化  
+适用范围：传入传出参数数据包较大，提供者比消费者个数多，提供者压力较大，可传文件。  
+适用场景：页面传输，文件传输，或与原生hessian服务互操作
+
+### RMI协议
+
+Java标准的远程调用协议，采用JDK标准的java.rmi.*实现，阻塞式短连接和JDK标准序列化方式
+
+基于RMI协议的远程调用协议:  
+连接个数：多连接  
+连接方式：短连接  
+传输协议：TCP  
+传输方式：同步传输
+序列化：Java标准二进制序列化  
+适用范围：传入传出参数数据包大小混合，消费者与提供者个数差不多，可传文件。  
+适用场景：常规远程服务方法调用，与原生RMI服务互操作
+
+### HTTP协议
+
+此协议采用 spring 的HttpInvoker的功能实现，
+
+基于HTTP的远程调用协议:  
+连接个数：多连接  
+连接方式：长连接  
+连接协议：http  
+传输方式：同步传输  
+序列化：表单序列化(JSON)  
+适用范围：传入传出参数数据包大小混合，提供者比消费者个数多，可用浏览器查看，可用表单或URL传入参数，暂不支持传文件。  
+适用场景：需同时给应用程序和浏览器JS使用的服务。
+
+## Dubbo支持哪些序列化
+
+![支持的序列化](https://rong0624.github.io/images/Dubbo/1627984641381.jpg)
+Dubbo支持Hession，Dubbo，Json、Dubbo多种序列化协议。但是Hessian是其默认的序列化协议。
+
+## Dubbo支持哪些注册中心
+
+![支持的注册中心](https://rong0624.github.io/images/Dubbo/1627983532373.jpg)  
+Zookeeper、Redis、Multicast、Simple 都可以作为Dubbo的注册中心，Dubbo官方推荐使用 Zookeeper。
+
+## Dubbo支持哪些通讯框架
+
+![支持的通讯框架](https://rong0624.github.io/images/Dubbo/1627983850471.jpg)  
+Netty、Mina、Grizzly 都可以作为Dubbo的通讯框架，Dubbo推荐并默认使用 Netty。
+
+## Dubbo支持哪些服务容器
+
+![支持的服务容器](https://rong0624.github.io/images/Dubbo/1627986389534.jpg)
+Dubbo 支持的服务容器有三种：Spring Container，Jetty Container，Log4j Container；
+Dubbo 的服务容器只是一个简单的 Main 方法，并加载一个简单的 Spring 容器，用于暴露服务。
