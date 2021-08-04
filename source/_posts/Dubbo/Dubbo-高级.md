@@ -1,5 +1,5 @@
 ---
-title: Dubbo高级
+title: Dubbo-高级
 date: 2021-07-8 00:00:00
 author: 神奇的荣荣
 summary: ""
@@ -130,21 +130,85 @@ Broadcast Cluster
 
 当服务器压力剧增的情况下，根据当前业务情况及流量对一些服务和页面有策略的降级（返回一个友好提示给客户端，不去执行主业务逻辑，调用fallBack本地方法），以此释放服务器资源以保证核心任务的正常运行。
 
-### 服务降级配置
+### Dubbo 服务降级机制
 
-可以通过服务降级功能临时屏蔽某个出错的非关键服务，并定义降级后的返回策略。
+Dubbo的服务降级采用的是mock机制；即当服务提供者出错时（抛出 RpcException），进行 mock 调用；  
+同时也可以用于本地测试，用服务消费者端配置的 mock 服务替代要调用的远程服务，亦或者是对某个服务消费者屏蔽服务提供者，不让其进行远程调用。
 
-向注册中心写入动态配置覆盖规则：
+其具有两种策略方式：
+- fail：当服务消费者调用服务提供者失败后，会去执行配置的 mock 策略。 配置方式为 mock=“fail:策略” 或者 mock=“策略”。
+- force：当服务消费者调用服务提供者时，会直接执行 mock 配置的策略，不会进行服务调用。
 
-```java
-RegistryFactory registryFactory = ExtensionLoader.getExtensionLoader(RegistryFactory.class).getAdaptiveExtension();
-Registry registry = registryFactory.getRegistry(URL.valueOf("zookeeper://10.20.153.10:2181"));
-registry.register(URL.valueOf("override://0.0.0.0/com.foo.BarService?category=configurators&dynamic=false&application=foo&mock=force:return+null"));
+### fail 策略
+
+当服务消费者调用服务提供者失败后，会去执行配置的 mock 策略。 配置方式为 mock=“fail:策略” 或者 mock=“策略”。
+
+#### mock=“true”
+
+```xml
+<dubbo:reference id="userService" interface="com.oyr.user.service.UserService" mock="true" />
+
+<dubbo:reference id="userService" interface="com.oyr.user.service.UserService" mock="fail:true" />
+```
+解释：指定 mock 策略为布尔类型，且为 true，此时需要消费端提供服务接口的 mock 实现类，该类的包名需要与服务接口一致，且类名格式为 [接口名 + Mock], 即 com.oyr.user.service.UserServiceMock, 当调用远程服务失败后, 就会执行 UserServiceMock的相同方法（远程调用是hello方法，那么即会调用mock的hello方法）, 如果不提供此 mock 类，dubbo 消费端会启动失败。
+
+#### mock=“具体的mock实现类”
+
+```xml
+<dubbo:reference id="userService" interface="com.oyr.user.service.UserService" mock="com.oyr.user.service.mock.UserServiceMock" />
+or
+<dubbo:reference id="userService" interface="com.oyr.user.service.UserService" mock="fail:com.oyr.user.service.mock.UserServiceMock" />
 ```
 
-解释：
-- mock=force:return+null 表示消费方对该服务的方法调用都直接返回 null 值，不发起远程调用。用来屏蔽不重要服务不可用时对调用方的影响。
-- 还可以改为 mock=fail:return+null 表示消费方对该服务的方法调用在失败后，再返回 null 值，不抛异常。用来容忍不重要服务不稳定时对调用方的影响。
+解释：指定 mock 策略为具体的 mock 实现类, 当调用远程服务失败时, 就会执行 mock 实现类的相同方法.
+
+#### mock=“抛出自定义异常”
+
+```xml
+<dubbo:reference id="userService" interface="com.oyr.user.service.UserService" mock="throw org.apache.dubbo.demo.consumer.exception.CustomException" />
+or
+<dubbo:reference id="userService" interface="com.oyr.user.service.UserService" mock="fail:throw org.apache.dubbo.demo.consumer.exception.CustomException" />
+```
+
+解释：指定 mock 策略为抛出自定义异常, 当远程服务调用失败后, 会给服务消费者抛出自定义异常.
+
+#### mock=“返回 mock 数据”
+
+```xml
+<dubbo:reference id="userService" interface="com.oyr.user.service.UserService" mock="return null" />
+or
+<dubbo:reference id="userService" interface="com.oyr.user.service.UserService" mock="fail:return null" />
+```
+
+解释：指定 mock 属性值为返回 mock 数据，当远程服务调用失败后，就会给服务消费者返回null。
+
+### force 策略
+
+当服务消费者调用服务提供者时，会直接执行 mock 配置的策略，不会进行服务调用。
+具体的策略跟 fail 策略一致，此处不再详细说明。
+
+#### mock=“force:true”
+
+```xml
+<dubbo:reference id="demoService" mock="“force:true" interface="org.apache.dubbo.demo.DemoService"/>
+```
+#### mock=“force: 执行Mock实现类”
+
+```xml
+<dubbo:reference id="demoService" mock="force:com.apache.dubbo.demo.DemoServiceMock2" interface="org.apache.dubbo.demo.DemoService"/>
+```
+
+#### mock=“force:抛出自定义异常”
+
+```xml
+<dubbo:reference id="demoService" mock="force:throw com.apache.dubbo.demo.XXXException" interface="org.apache.dubbo.demo.DemoService"/>
+```
+
+#### mock=“force:返回mock数据”
+
+```xml
+<dubbo:reference id="demoService" mock="force:return xxx" interface="org.apache.dubbo.demo.DemoService"/>
+```
 
 ## 注册中心宕机与Dubbo直连
 
@@ -288,6 +352,21 @@ public class Provider {
 
 结论：Hystrix有强大的容错能力，无论是超时还是错误，都可以调用备用方法返回。
 
+# Dubbo SPI机制
+
+## 什么是SPI？
+
+SPI（service provider interface）。  
+是什么意思呢？比如你有个接口，现在这个接口有 3 个实现类，那么在系统运行的时候对这个接口到底选择哪个实现类呢？这就需要 spi 了，需要根据指定的配置或者是默认的配置，去找到对应的实现类加载进来，然后用这个实现类的实例对象。
+
+举个例子：你有一个接口 A。A1/A2/A3 分别是接口A的不同实现。你通过配置 接口 A = 实现 A2，那么在系统实际运行的时候，会加载你的配置，用实现 A2 实例化一个对象来提供服务。
+
+spi 机制一般用在哪儿？  
+主要在框架中使用，用于插件扩展的场景，比如说你开发了一个给别人使用的开源框架，如果你想让别人自己写个插件，插到你的开源框架里面，从而扩展某个功能，这个时候 spi 思想就用上了。
+
+## Java SPI
+
+
 # RPC
 
 ## 什么是RPC
@@ -324,7 +403,7 @@ RPC【Remote Procedure Call】是指远程过程调用，是一种进程间通�
 RPC框架的目标就是要2~8这些步骤都封装起来，这些细节对用户来说是透明的，不可见的。
 ```
 
-# Dubbo
+# Dubbo 底层解析
 
 ## Dubbo-架构设计
 

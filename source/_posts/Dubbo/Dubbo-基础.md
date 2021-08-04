@@ -1,5 +1,5 @@
 ---
-title: Dubbo基础
+title: Dubbo-基础
 date: 2021-06-25 00:00:00
 author: 神奇的荣荣
 summary: ""
