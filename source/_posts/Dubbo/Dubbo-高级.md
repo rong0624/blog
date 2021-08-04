@@ -241,131 +241,113 @@ xml配置方式：
 UserService userService;
 ```
 
-# Hystrix 断路器
+# Dubbo SPI 机制
 
-## 服务降级
-
-服务降级概念：  
-当服务器压力剧增的情况下，根据当前业务情况及流量对一些服务和页面有策略的降级（返回一个友好提示给客户端，不去执行主业务逻辑，调用fallBack本地方法），以此释放服务器资源以保证核心任务的正常运行。
-
-## 服务熔断
-
-服务熔断概念：  
-我们在各种场景下都会接触到熔断这两个字。高压电路中，如果某个地方的电压过高，熔断器就会熔断，对电路进行保护。股票交易中，如果股票指数过高，也会采用熔断机制，暂停股票的交易。
-
-同样，在微服务架构中，熔断机制也是起着类似的作用。当扇出链路的某个微服务调用慢或者有大量超时，会进行服务的降级，进而熔断该节点微服务的调用，快速返回错误的响应信息。当检测到该节点微服务调用响应正常后，恢复调用链路。
-
-服务熔断机制和服务降级是一起使用。
-
-## Hystrix简介
-
-Hystrix 旨在通过控制那些访问远程系统、服务和第三方库的节点，从而对延迟和故障提供更强大的容错能力。Hystrix具备拥有回退机制和断路器功能的线程和信号隔离，请求缓存和请求打包，以及监控和配置等功能。
-
-## 整合Hystrix
-
-### 提供者改造
-
-1）导入hystrix依赖（spring boot官方提供了对hystrix的集成）  
-直接在pom.xml里加入依赖：  
-```xml
-    <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
-        <version>2.2.9.RELEASE</version>
-    </dependency>
-```
-注意：需要找到版本合适的netflix导入（springboot2.2.4.RELEASE & hystrix2.2.9.RELEASE & dubbo2.7.7）
-
-2）修改代码  
-修改userServiceImpl  
-```java
-@DubboService
-public class UserServiceImpl implements UserService {
-
-    public final static Map<String, List<UserAddressDto>> map;
-
-    static {
-        List<UserAddressDto> list1 = Stream.of(new UserAddressDto(1, "1", "江西赣州", "欧阳", "152*****", false),
-                new UserAddressDto(2, "1", "广东深圳", "欧阳", "152*****", true),
-                new UserAddressDto(1, "1", "浙江上海", "欧阳", "152*****", false))
-                .collect(Collectors.toList());
-        List<UserAddressDto> list2 = Stream.of(new UserAddressDto(3, "2", "江西赣州", "东华", "152*****", false),
-                new UserAddressDto(4, "2", "广东深圳", "东华", "152*****", true),
-                new UserAddressDto(5, "2", "浙江上海", "东华", "152*****", false))
-                .collect(Collectors.toList());
-
-        List<UserAddressDto> list3 = Stream.of(new UserAddressDto(6, "3", "江西赣州", "异常用户", "152*****", false))
-                .collect(Collectors.toList());
-        map = new HashMap<>();
-        map.put("1", list1);
-        map.put("2", list2);
-        map.put("3", list3);
-    }
-
-    // 方法出现异常后，调用其他方法进行返回
-    @HystrixCommand(fallbackMethod = "getUserAddressError")
-    @Override
-    public List<UserAddressDto> getUserAddress(String userId) {
-        if (Math.random() > 0.5) {
-            throw new RuntimeException("错误的参数");
-        }
-        return map.get(userId);
-    }
-
-    private List<UserAddressDto> getUserAddressError(String userId) {
-        return map.get("3");
-    }
-}
-```
-
-3）开启hystrix  
-在Application类上增加@EnableHystrix来开启：
-```java
-// 开启Hystrix，进行代理
-@EnableHystrix
-// 开启Dubbo，扫描Dubbo注解（扫描当前包和子包内容）
-@EnableDubbo
-@SpringBootApplication
-public class Provider {
-
-    public static void main(String[] args) {
-        SpringApplication.run(Provider.class, args);
-    }
-
-}
-```
-
-### 消费者改造
-
-当前是在服务提供者做熔断，所以消费者不需要改造。
-（如果需要在消费者中做熔断，改造步骤和提供者一致）
-
-### 启动查看效果
-
-启动提供者和消费者，访问：http://localhost:8080/dubbo
-
-正常访问：  
-![服务熔断正常访问](https://rong0624.github.io/images/Dubbo/1627894884676.jpg)
-
-异常访问：  
-![服务熔断异常访问](https://rong0624.github.io/images/Dubbo/1627894974462.jpg)
-
-结论：Hystrix有强大的容错能力，无论是超时还是错误，都可以调用备用方法返回。
-
-# Dubbo SPI机制
-
-## 什么是SPI？
+## SPI 是什么？
 
 SPI（service provider interface）。  
-是什么意思呢？比如你有个接口，现在这个接口有 3 个实现类，那么在系统运行的时候对这个接口到底选择哪个实现类呢？这就需要 spi 了，需要根据指定的配置或者是默认的配置，去找到对应的实现类加载进来，然后用这个实现类的实例对象。
+是什么意思呢？比如你有个接口，现在这个接口有 3 个实现类，那么在系统运行的时候对这个接口到底选择哪个实现类呢？这就需要 SPI 了，需要根据指定的配置或者是默认的配置，去找到对应的实现类加载进来，然后用这个实现类的实例对象。
+
+SPI 一般用在哪儿？  
+主要在框架中使用，用于插件扩展的场景，比如说你开发了一个给别人使用的开源框架，如果你想让别人自己写个插件，插到你的开源框架里面，从而扩展某个功能，这个时候 SPI 思想就用上了。
 
 举个例子：你有一个接口 A。A1/A2/A3 分别是接口A的不同实现。你通过配置 接口 A = 实现 A2，那么在系统实际运行的时候，会加载你的配置，用实现 A2 实例化一个对象来提供服务。
 
-spi 机制一般用在哪儿？  
-主要在框架中使用，用于插件扩展的场景，比如说你开发了一个给别人使用的开源框架，如果你想让别人自己写个插件，插到你的开源框架里面，从而扩展某个功能，这个时候 spi 思想就用上了。
+## API 和 SPI 的区别
+
+API （Application Programming Interface）在大多数情况下，都是实现方制定接口并完成对接口的实现，调用方仅仅依赖接口调用，且无权选择不同实现。 从使用人员上来说，API 直接被应用开发人员使用。
+
+SPI （Service Provider Interface）是调用方来制定接口规范，提供给外部来实现，调用方在调用时则选择自己需要的外部实现。  从使用人员上来说，SPI 被框架扩展人员使用。
 
 ## Java SPI
 
+### Java SPI 简介
+
+SPI 经典的思想体现，大家平时都在用，比如说 jdbc。
+Java 定义了一套 jdbc 的接口，但是 Java 并没有提供 jdbc 的实现类。
+但是实际上项目跑的时候，要使用 jdbc 接口的哪些实现类呢？一般来说，我们要根据自己使用的数据库，比如 mysql，你就将 mysql-jdbc-connector.jar 引入进来；oracle，你就将 oracle-jdbc-connector.jar 引入进来。
+在系统跑的时候，碰到你使用 jdbc 的接口，他会在底层使用你引入的那个 jar 中提供的实现类。
+
+### Java SPI 实现细节
+
+Java SPI 约定在 Classpath 下的 META-INF/services/ 目录里创建一个**以服务接口命名的文件**，然后**文件里面记录的是此 jar 包提供的具体实现类的全限定名。**  
+这样当我们引用了某个jar包的时候，就可以去找这个jar包的META-INF/services/目录，再根据接口名找到文件，然后读取文件里面的内容去进行实现类的加载与实例化。
+
+看个案例：看下MySql是怎么做的：  
+![MySql SPI实现1](https://rong0624.github.io/images/Dubbo/MySql_SPI实现1.png)
+再看下文件里的内容：  
+![MySql SPI实现2](https://rong0624.github.io/images/Dubbo/MySql_SPI实现2.png)
+
+### Java SPI 缺点
+
+Java SPI 在查找扩展实现类的时候遍历 SPI 的配置文件并且将实现类全部实例化，假设一个实现类初始化过程比较消耗资源且耗时，但是你的代码里面又用不上它，这就产生了资源的浪费。
+
+所以说 Java SPI 无法按需加载实现类。
+
+## Dubbo SPI
+
+### Dubbo SPI 简介
+
+Dubbo 也用了 SPI 思想，不过没有用 jdk 的 SPI 机制，是自己实现的一套 SPI 机制。
+Dubbo SPI：是按需加载实现类的，按需加载的话首先你得给个名字，通过名字去文件里面找到对应的实现类全限定名然后加载实例化即可。Dubbo 就是这样设计的，配置文件里面存放的是键值对。
+
+我们先来看一下 Dubbo 对配置文件目录的约定，不同于 Java SPI ，Dubbo 分为了三类目录：
+- META-INF/services/ 目录：该目录下的 SPI 配置文件是为了用来兼容 Java SPI 。
+- META-INF/dubbo/ 目录：该目录存放用户自定义的 SPI 配置文件。
+- META-INF/dubbo/internal/ 目录：该目录存放 Dubbo 内部使用的 SPI 配置文件。
+
+注意：Dubbo SPI 除了可以按需加载实现类之外，增加了 IOC 和 AOP 的特性，还有个自适应扩展机制。
+
+### Dubbo SPI 实现细节
+
+注意：当前拿 Dubbo Protocol 来演示。
+
+Protocol 接口，在系统运行的时候，dubbo 会判断一下应该选用这个 Protocol 接口的哪个实现类来实例化对象来使用。
+它会去找一个你配置的 Protocol，将你配置的 Protocol 实现类，加载到 jvm 中来，然后实例化对象，就用你的那个 Protocol 实现类就可以了。
+```java
+@SPI("dubbo")  
+public interface Protocol {  
+      
+    int getDefaultPort();  
+  
+    @Adaptive  
+    <T> Exporter<T> export(Invoker<T> invoker) throws RpcException;  
+  
+    @Adaptive  
+    <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException;  
+
+    void destroy();  
+  
+}  
+```
+
+在 dubbo 自己的 jar 里，在/META_INF/dubbo/internal/com.alibaba.dubbo.rpc.Protocol文件中：
+```
+dubbo=org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol
+injvm=org.apache.dubbo.rpc.protocol.injvm.InjvmProtocol
+http=org.apache.dubbo.rpc.protocol.http.HttpProtocol
+rmi=org.apache.dubbo.rpc.protocol.rmi.RmiProtocol
+hessian=org.apache.dubbo.rpc.protocol.hessian.HessianProtocol
+org.apache.dubbo.rpc.protocol.webservice.WebServiceProtocol
+thrift=org.apache.dubbo.rpc.protocol.thrift.ThriftProtocol
+native-thrift=org.apache.dubbo.rpc.protocol.nativethrift.ThriftProtocol
+memcached=org.apache.dubbo.rpc.protocol.memcached.MemcachedProtocol
+redis=org.apache.dubbo.rpc.protocol.redis.RedisProtocol
+rest=org.apache.dubbo.rpc.protocol.rest.RestProtocol
+xmlrpc=org.apache.dubbo.xml.rpc.protocol.xmlrpc.XmlRpcProtocol
+grpc=org.apache.dubbo.rpc.protocol.grpc.GrpcProtocol
+```
+
+所以说，这就看到了 dubbo 的 SPI 机制默认是怎么玩儿的了，其实就是 Protocol 接口，@SPI("dubbo") 说的是，通过 SPI 机制来提供实现类，实现类是通过 dubbo 作为默认 key 去配置文件里找到的，配置文件名称与接口全限定名一样的，通过 dubbo 作为 key 可以找到默认的实现类就是 com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol。
+
+如果想要动态替换掉默认的实现类，需要使用 @Adaptive 接口，Protocol 接口中，有两个方法加了 @Adaptive 注解，就是说那俩接口会被代理实现。
+比如这个 Protocol 接口搞了俩 @Adaptive 注解标注了方法，在运行的时候会针对 Protocol 生成代理类，这个代理类的那俩方法里面会有代理代码，代理代码会在运行的时候动态根据 url 中的 protocol 来获取那个 key，默认是 dubbo，你也可以自己指定，你如果指定了别的 key，那么就会获取别的实现类的实例了。
+
+## 参考博客
+
+https://shishan100.gitee.io/docs/#/./docs/distributed-system/dubbo-spi
+
+https://blog.csdn.net/qq_35190492/article/details/108256452?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522162808615116780262585211%2522%252C%2522scm%2522%253A%252220140713.130102334.pc%255Fblog.%2522%257D&request_id=162808615116780262585211&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~blog~first_rank_v2~rank_v29-1-108256452.pc_v2_rank_blog_default&utm_term=spi&spm=1018.2226.3001.4450
 
 # RPC
 
