@@ -112,7 +112,7 @@ Forking Cluster
 并行调用多个服务器，只要一个成功即返回。通常用于实时性要求较高的读操作，但需要浪费更多服务资源。可通过 forks="2" 来设置最大并行数。
 
 Broadcast Cluster
-广播调用所有提供者，逐个调用，任意一台报错则报错 [2]。通常用于通知所有提供者更新缓存或日志等本地资源信息。
+广播调用所有提供者，逐个调用，任意一台报错则报错。通常用于通知所有提供者更新缓存或日志等本地资源信息。
 ```
 
 ### 集群容错配置
@@ -246,7 +246,8 @@ UserService userService;
 ## SPI 是什么？
 
 SPI（service provider interface）。  
-是什么意思呢？比如你有个接口，现在这个接口有 3 个实现类，那么在系统运行的时候对这个接口到底选择哪个实现类呢？这就需要 SPI 了，需要根据指定的配置或者是默认的配置，去找到对应的实现类加载进来，然后用这个实现类的实例对象。
+SPI 就是通过动态加载机制实现面向接口编程;  
+SPI 是Java提供的一套用来被第三方实现或者扩展的接口，它可以用来启用框架扩展和替换组件;
 
 SPI 一般用在哪儿？  
 主要在框架中使用，用于插件扩展的场景，比如说你开发了一个给别人使用的开源框架，如果你想让别人自己写个插件，插到你的开源框架里面，从而扩展某个功能，这个时候 SPI 思想就用上了。
@@ -342,6 +343,221 @@ grpc=org.apache.dubbo.rpc.protocol.grpc.GrpcProtocol
 
 如果想要动态替换掉默认的实现类，需要使用 @Adaptive 接口，Protocol 接口中，有两个方法加了 @Adaptive 注解，就是说那俩接口会被代理实现。
 比如这个 Protocol 接口搞了俩 @Adaptive 注解标注了方法，在运行的时候会针对 Protocol 生成代理类，这个代理类的那俩方法里面会有代理代码，代理代码会在运行的时候动态根据 url 中的 protocol 来获取那个 key，默认是 dubbo，你也可以自己指定，你如果指定了别的 key，那么就会获取别的实现类的实例了。
+
+### Dubbo 自定义扩展组件
+
+这里展示一下，如何去扩展 Dubbo Protocol 的组件；
+
+#### 新开一个maven工程（protocol-demo），打包方式为jar；
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.oyr</groupId>
+    <artifactId>protocol-demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <!-- dubbo -->
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-spring-boot-starter</artifactId>
+            <version>2.7.7</version>
+        </dependency>
+    </dependencies>
+
+</project>
+```
+
+#### Protocol 自定义实现
+
+以下代码，是将 Dubbo RmiProtocol 的实现复制过来的，当做是自定义的 Protocol 实现
+```java
+package com.oyr.dubbo.protocol;
+
+import org.apache.dubbo.common.URL;
+import org.apache.dubbo.rpc.RpcException;
+import org.apache.dubbo.rpc.protocol.AbstractProxyProtocol;
+import org.apache.dubbo.rpc.protocol.rmi.RmiRemoteInvocation;
+import org.apache.dubbo.rpc.service.GenericService;
+import org.apache.dubbo.rpc.support.ProtocolUtils;
+import org.springframework.remoting.RemoteAccessException;
+import org.springframework.remoting.rmi.RmiProxyFactoryBean;
+import org.springframework.remoting.rmi.RmiServiceExporter;
+import org.springframework.remoting.support.RemoteInvocation;
+
+import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.rmi.RemoteException;
+
+import static org.apache.dubbo.common.Version.isRelease263OrHigher;
+import static org.apache.dubbo.common.Version.isRelease270OrHigher;
+import static org.apache.dubbo.common.constants.CommonConstants.DUBBO_VERSION_KEY;
+import static org.apache.dubbo.common.constants.CommonConstants.RELEASE_KEY;
+import static org.apache.dubbo.rpc.Constants.GENERIC_KEY;
+
+public class MyProtocol extends AbstractProxyProtocol {
+
+    public static final int DEFAULT_PORT = 1099;
+
+    public MyProtocol() {
+        super(RemoteAccessException.class, RemoteException.class);
+        System.out.println("MyProtocol Init");
+    }
+
+    @Override
+    public int getDefaultPort() {
+        return DEFAULT_PORT;
+    }
+
+    @Override
+    protected <T> Runnable doExport(final T impl, Class<T> type, URL url) throws RpcException {
+        RmiServiceExporter rmiServiceExporter = createExporter(impl, type, url, false);
+        RmiServiceExporter genericServiceExporter = createExporter(impl, GenericService.class, url, true);
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    rmiServiceExporter.destroy();
+                    genericServiceExporter.destroy();
+                } catch (Throwable e) {
+                    logger.warn(e.getMessage(), e);
+                }
+            }
+        };
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected <T> T doRefer(final Class<T> serviceType, final URL url) throws RpcException {
+        final RmiProxyFactoryBean rmiProxyFactoryBean = new RmiProxyFactoryBean();
+        final String generic = url.getParameter(GENERIC_KEY);
+        final boolean isGeneric = ProtocolUtils.isGeneric(generic) || serviceType.equals(GenericService.class);
+        /*
+          RMI needs extra parameter since it uses customized remote invocation object
+
+          The customized RemoteInvocation was firstly introduced in v2.6.3; The package was renamed to 'org.apache.*' since v2.7.0
+          Considering the above two conditions, we need to check before sending customized RemoteInvocation:
+          1. if the provider version is v2.7.0 or higher, send 'org.apache.dubbo.rpc.protocol.rmi.RmiRemoteInvocation'.
+          2. if the provider version is v2.6.3 or higher, send 'com.alibaba.dubbo.rpc.protocol.rmi.RmiRemoteInvocation'.
+          3. if the provider version is lower than v2.6.3, does not use customized RemoteInvocation.
+         */
+        if (isRelease270OrHigher(url.getParameter(RELEASE_KEY))) {
+            rmiProxyFactoryBean.setRemoteInvocationFactory(methodInvocation -> {
+                RemoteInvocation invocation = new RmiRemoteInvocation(methodInvocation);
+                if (isGeneric) {
+                    invocation.addAttribute(GENERIC_KEY, generic);
+                }
+                return invocation;
+            });
+        } else if (isRelease263OrHigher(url.getParameter(DUBBO_VERSION_KEY))) {
+            rmiProxyFactoryBean.setRemoteInvocationFactory(methodInvocation -> {
+                RemoteInvocation invocation = new com.alibaba.dubbo.rpc.protocol.rmi.RmiRemoteInvocation(methodInvocation);
+                if (isGeneric) {
+                    invocation.addAttribute(GENERIC_KEY, generic);
+                }
+                return invocation;
+            });
+        }
+        String serviceUrl = url.toIdentityString();
+        if (isGeneric) {
+            serviceUrl = serviceUrl + "/" + GENERIC_KEY;
+        }
+        rmiProxyFactoryBean.setServiceUrl(serviceUrl);
+        rmiProxyFactoryBean.setServiceInterface(serviceType);
+        rmiProxyFactoryBean.setCacheStub(true);
+        rmiProxyFactoryBean.setLookupStubOnStartup(true);
+        rmiProxyFactoryBean.setRefreshStubOnConnectFailure(true);
+        rmiProxyFactoryBean.afterPropertiesSet();
+        return (T) rmiProxyFactoryBean.getObject();
+    }
+
+    @Override
+    protected int getErrorCode(Throwable e) {
+        if (e instanceof RemoteAccessException) {
+            e = e.getCause();
+        }
+        if (e != null && e.getCause() != null) {
+            Class<?> cls = e.getCause().getClass();
+            if (SocketTimeoutException.class.equals(cls)) {
+                return RpcException.TIMEOUT_EXCEPTION;
+            } else if (IOException.class.isAssignableFrom(cls)) {
+                return RpcException.NETWORK_EXCEPTION;
+            } else if (ClassNotFoundException.class.isAssignableFrom(cls)) {
+                return RpcException.SERIALIZATION_EXCEPTION;
+            }
+        }
+        return super.getErrorCode(e);
+    }
+
+    private <T> RmiServiceExporter createExporter(T impl, Class<?> type, URL url, boolean isGeneric) {
+        final RmiServiceExporter rmiServiceExporter = new RmiServiceExporter();
+        rmiServiceExporter.setRegistryPort(url.getPort());
+        if (isGeneric) {
+            rmiServiceExporter.setServiceName(url.getPath() + "/" + GENERIC_KEY);
+        } else {
+            rmiServiceExporter.setServiceName(url.getPath());
+        }
+        rmiServiceExporter.setServiceInterface(type);
+        rmiServiceExporter.setService(impl);
+        try {
+            rmiServiceExporter.afterPropertiesSet();
+        } catch (RemoteException e) {
+            throw new RpcException(e.getMessage(), e);
+        }
+        return rmiServiceExporter;
+    }
+
+}
+```
+
+#### Dubbo规定目录下配置
+
+1）在工程 resources 目录下新建 ETA-INF/services 目录；  
+2）在 ETA-INF/services 目录下，新建一个 com.alibaba.dubbo.rpc.Protocol 文件；  
+3）指定 com.alibaba.dubbo.rpc.Protocol 文件内容：  
+```
+my=com.oyr.dubbo.protocol.MyProtocol
+```
+
+#### 修改服务提供者，使用自定义的 Protocol 实现
+
+1）把自定义实现的jar依赖到服务提供者中
+
+```xml
+    <dependency>
+        <groupId>com.oyr</groupId>
+        <artifactId>protocol-demo</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+```
+
+2）修改配置，协议使用自定义实现
+```properties
+#dubbo 配置
+dubbo.application.name=user-provider
+dubbo.registry.protocol=zookeeper
+dubbo.registry.address=127.0.0.1:2181
+# 使用自定义实现的协议
+dubbo.protocol.name=my
+dubbo.protocol.port=20888
+```
+
+3）启动服务提供者，查看效果；
+启动服务提供者，控制台应该打印出：MyProtocol Init；  
+这既代表已经使用了自定义实现的协议；
+
+#### 总结
+
+服务提供者启动的时候，就会加载 my=com.bingo.MyProtocol 这行配置里，接着会根据你的配置使用你定义好的 MyProtocol 了；
+
+dubbo 里面提供了大量的类似上面的扩展点，就是说，你如果要扩展一个东西，只要自己写个 jar，让你的 consumer 或者是 provider 工程，依赖你的那个 jar，在你的 jar 里指定目录下配置好接口名称对应的文件，里面通过 key=实现类。
+然后对于对应的组件，类似 <dubbo:protocol> 用你的那个 key 对应的实现类来实现某个接口，你可以自己去扩展 dubbo 的各种功能，提供你自己的实现。
 
 ## 参考博客
 

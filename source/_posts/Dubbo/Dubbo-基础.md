@@ -721,17 +721,17 @@ Dubbo推荐在Provider上尽量多配置Consumer端属性。
 1）作服务的提供者，比服务使用方更清楚服务性能参数，如调用的超时时间，合理的重试次数，等等  
 2）在Provider配置后，Consumer不配置则会使用Provider的配置值，即Provider配置可以作为Consumer的缺省值。否则，Consumer会使用Consumer端的全局设置，这对于Provider不可控的，并且往往是不合理的
 
-## 属性配置覆盖规则
+## 属性配置优先级
 
-![属性配置覆盖规则](https://rong0624.github.io/images/Dubbo/属性配置覆盖规则.png)
+![属性配置优先级](https://rong0624.github.io/images/Dubbo/属性配置覆盖规则.png)
 
 1）方法级配置别优于接口级别，接口级别优于全局配置，即小Scope优先 
 2）Consumer端配置优于 Provider配置
 3）最后是Dubbo Hard Code的配置值（见配置文档）
 
-## 配置文件覆盖规则
+## 配置文件优先级
 
-![配置文件覆盖规则](https://rong0624.github.io/images/Dubbo/配置文件覆盖规则.png)
+![配置文件优先级](https://rong0624.github.io/images/Dubbo/配置文件覆盖规则.png)
 
 1）JVM 启动 -D 参数优先，这样可以使用户在部署和启动时进行参数重写，比如在启动时需改变协议的端口。  
 2）XML 次之，如果在 XML 中有配置，则 dubbo.properties 中的相应配置项无效。  
@@ -869,7 +869,7 @@ Java标准的远程调用协议，采用JDK标准的java.rmi.*实现，阻塞式
 ## Dubbo支持哪些序列化
 
 ![支持的序列化](https://rong0624.github.io/images/Dubbo/1627984641381.jpg)
-Dubbo支持Hession，Dubbo，Json、Dubbo多种序列化协议。但是Hessian是其默认的序列化协议。
+Dubbo 支持 Hession，Dubbo，Json、Java 多种序列化方式。但是 Hessian 是其默认的序列化方式。
 
 ## Dubbo支持哪些注册中心
 
@@ -879,7 +879,7 @@ Zookeeper、Redis、Multicast、Simple 都可以作为Dubbo的注册中心，Dub
 ## Dubbo支持哪些通讯框架
 
 ![支持的通讯框架](https://rong0624.github.io/images/Dubbo/1627983850471.jpg)  
-Netty、Mina、Grizzly 都可以作为Dubbo的通讯框架，Dubbo推荐并默认使用 Netty。
+Dubbo 支持 Netty、Mina、Grizzly 多种通讯框架，Dubbo推荐并默认使用 Netty。
 
 ## Dubbo支持哪些服务容器
 
