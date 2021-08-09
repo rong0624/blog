@@ -565,6 +565,97 @@ https://shishan100.gitee.io/docs/#/./docs/distributed-system/dubbo-spi
 
 https://blog.csdn.net/qq_35190492/article/details/108256452?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522162808615116780262585211%2522%252C%2522scm%2522%253A%252220140713.130102334.pc%255Fblog.%2522%257D&request_id=162808615116780262585211&biz_id=0&utm_medium=distribute.pc_search_result.none-task-blog-2~blog~first_rank_v2~rank_v29-1-108256452.pc_v2_rank_blog_default&utm_term=spi&spm=1018.2226.3001.4450
 
+# Dubbo Container（服务容器）
+
+## Dubbo Container 简介
+
+Dubbo Container 是一个独立的启动程序，因为后台服务不需要 Tomcat 或 JBoss 等 Web 容器的功能，如果硬要用 Web 容器去加载服务提供方，增加复杂性，也浪费资源。
+
+服务容器只是一个简单的 Main 方法，并加载一个简单的 Spring 容器，用于暴露服务。
+
+## Dubbo 内置了几种服务容器
+
+### 服务容器分类
+
+dubbo 内置了 spring, jetty, log4j 等服务容器；
+当然也可以自己扩展服务容器进行加载；
+
+### Spring Container
+
+- 自动加载 META-INF/spring 目录下的所有 Spring 配置。（这个已在源码中写死）
+- 配置 spring 配置加载位置：(dubbo.spring.config=classpath*:META-INF/spring/*.xml)
+
+### Jetty Container
+
+- 启动一个内嵌 Jetty，用于汇报状态。
+- 配置：
+    - dubbo.jetty.port=8080：配置 jetty 启动端口
+    - dubbo.jetty.directory=/foo/bar：配置可通过 jetty 直接访问的目录，用于存放静态文件
+    - dubbo.jetty.page=log,status,system：配置显示的页面，缺省加载所有页面
+
+### Log4j Container
+
+- 自动配置 log4j 的配置，在多进程启动时，自动给日志文件按进程分目录。
+- 配置：
+    - dubbo.log4j.file=/foo/bar.log：配置日志文件路径
+    - dubbo.log4j.level=WARN：配置日志级别
+    - dubbo.log4j.subdirectory=20880：配置日志子目录，用于多进程启动，避免冲突
+
+## 容器启动
+
+SPI 容器扩展类：`org.apache.dubbo.container.Container`
+![SPI 容器扩展类](https://rong0624.github.io/images/Dubbo/1628502633574.jpg)
+
+`org.apache.dubbo.container.Main` 是服务启动的主类，在服务启动时会调用容器的 start() 方法，在服务停止时会调用 stop() 方法；
+
+那么默认到底是调用那个容器呢？注意 `org.apache.dubbo.container.Container` 接口有一个注解 `@SPI("spring")`；  
+通过对 Dubbo SPI 的了解，容器应该有内嵌对应的文件：org.apache.dubbo.container.Container；  
+org.apache.dubbo.container.Container内容：
+```
+spring=org.apache.dubbo.container.spring.SpringContainer
+log4j=org.apache.dubbo.container.log4j.Log4jContainer
+logback=org.apache.dubbo.container.logback.LogbackContainer
+```
+通过以上分析，可以知道默认调用的是org.apache.dubbo.container.spring.SpringContainer；
+
+
+## 容器停止
+
+dubbo是通过JDK的ShutdownHook来完成优雅停机的，所以如果用户使用"kill -9    PID"等强制关闭指令，是不会执行优雅停机的，只有通过"kill PID"时，才会执行。
+
+停止源码（在Main方法里面）：
+```java
+if ("true".equals(System.getProperty(SHUTDOWN_HOOK_KEY))) {
+    Runtime.getRuntime().addShutdownHook(new Thread("dubbo-container-shutdown-hook") {
+        @Override
+        public void run() {
+            for (Container container : containers) {
+                try {
+                    container.stop();
+                    logger.info("Dubbo " + container.getClass().getSimpleName() + " stopped!");
+                } catch (Throwable t) {
+                    logger.error(t.getMessage(), t);
+                }
+                try {
+                    LOCK.lock();
+                    STOP.signal();
+                } finally {
+                    LOCK.unlock();
+                }
+            }
+        }
+    });
+}
+```
+
+1）服务提供方  
+停止时，先标记为不接收新请求，新请求过来时直接报错，让客户端重试其它机器。  
+然后，检测线程池中的线程是否正在运行，如果有，等待所有线程执行完成，除非超时，则强制关闭。
+
+2）服务消费方  
+停止时，不再发起新的调用请求，所有新的调用在客户端即报错。  
+然后，检测有没有请求的响应还没有返回，等待响应返回，除非超时，则强制关闭。
+
 # RPC
 
 ## 什么是RPC

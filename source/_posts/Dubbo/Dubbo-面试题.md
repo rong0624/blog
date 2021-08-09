@@ -12,7 +12,7 @@ tags:
 
 # 配置
 
-## Dubbo 核心配置有哪些？
+## Dubbo 核心配置有哪些
 
 | 标签 | 用途 | 解释 |
 | ---- | ---- | ----  |
@@ -224,6 +224,27 @@ Dubbo 的直连模式，可以完全跳过注册中心，直接指定服务提�
 ```
 
 # 服务容器
+
+## Dubbo内置了哪几种服务容器？
+
+### Dubbo 官方文档
+
+dubbo 内置了 spring, jetty, log4j 等服务容器；
+支持自己扩展服务容器进行加载；
+
+### 2.7.7 版本
+
+dubbo 内置了 spring, log4j, logback 等服务容器；
+```
+spring=org.apache.dubbo.container.spring.SpringContainer
+log4j=org.apache.dubbo.container.log4j.Log4jContainer
+logback=org.apache.dubbo.container.logback.LogbackContainer
+```
+
+## 服务启动
+
+Dubbo 服务启动只是一个简单的 Main 方法，加载一个简单的 Spring 容器，用于暴露服务。
+在服务启动时，调用容器的 start() 方法，在服务停止时调用 stop() 方法。
 
 # 高可用
 
