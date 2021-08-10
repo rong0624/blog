@@ -210,37 +210,6 @@ or
 <dubbo:reference id="demoService" mock="force:return xxx" interface="org.apache.dubbo.demo.DemoService"/>
 ```
 
-## 注册中心宕机与Dubbo直连
-
-### 注册中心宕机问题
-
-在实际生产中，假如zookeeper注册中心宕掉，一段时间内服务消费方还是能够调用提供方的服务的，实际上它使用的本地缓存进行通讯，这只是dubbo健壮性的一种。
-
-健壮性  
-监控中心宕掉不影响使用，只是丢失部分采样数据  
-数据库宕掉后，注册中心仍能通过缓存提供服务列表查询，但不能注册新服务  
-注册中心对等集群，任意一台宕掉后，将自动切换到另一台  
-注册中心全部宕掉后，服务提供者和服务消费者仍能通过本地缓存通讯  
-服务提供者无状态，任意一台宕掉后，不影响使用  
-服务提供者全部宕掉后，服务消费者应用将无法使用，并无限次重连等待服务提供者恢复
-
-### 直连模式
-
-注册中心的作用在于保存服务提供者的位置信息，我们可以完全可以绕过注册中心——采用dubbo直连，即在服务消费方配置服务提供方的位置信息。  
-点对点直连方式，将以服务接口为单位，忽略注册中心的提供者列表，A 接口配置点对点，不影响 B 接口从注册中心获取列表。
-
-xml配置方式：
-```xml
-<dubbo:reference id="userService" 
-    interface="com.zang.gmall.service.UserService" url="dubbo://localhost:20880" />
-```
-
-注解方式：
-```java
-@Reference(url = "127.0.0.1:20880")
-UserService userService;
-```
-
 # Dubbo SPI 机制
 
 ## SPI 是什么？

@@ -131,6 +131,11 @@ Java标准的远程调用协议，采用JDK标准的java.rmi.*实现，阻塞式
 
 基于Memcached实现RPC协议
 
+## Dubbo支持服务多协议吗？
+
+Dubbo 支持多协议；  
+Dubbo 在不同服务上支持不同协议 或者 同一服务上同时支持多种协议。
+
 # 序列化
 
 ## Dubbo 支持哪些序列化
@@ -156,7 +161,7 @@ Dubbo 支持 Hession，Dubbo，Json、Java自带序列化 多种序列化方式�
 
 主要是采用JDK自带的Java序列化实现，性能很不理想。
 
-## Hessian 的数据结构？
+## Hessian 的数据结构
 
 Hessian 的对象序列化机制有 8 种原始类型：
 - 原始二进制数据
@@ -222,6 +227,11 @@ Dubbo 的直连模式，可以完全跳过注册中心，直接指定服务提�
 <dubbo:reference id="userService" 
     interface="com.zang.gmall.service.UserService" url="dubbo://localhost:20880" />
 ```
+
+## Dubbo 支持多注册中心吗？
+
+Dubbo 支持多注册中心；  
+Dubbo 支持同一服务向多注册中心同时注册，或者不同服务分别注册到不同的注册中心上去，甚至可以同时引用注册在不同注册中心上的同名服务。  
 
 # 服务容器
 
@@ -340,7 +350,11 @@ Dubbo SPI：
 
 # RPC 架构
 
+详情看 Dubbo-高级（RPC模块）
+
 # Dubbo 架构
+
+详情看 Dubbo-高级（Dubbo 底层解析模块）
 
 # 其他
 

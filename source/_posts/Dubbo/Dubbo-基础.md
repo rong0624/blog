@@ -808,7 +808,8 @@ java -jar dubbo-admin-0.0.1-SNAPSHOT.jar
 使用root/root登录  
 ![dubbo监控中心页面](https://rong0624.github.io/images/Dubbo/dubbo监控中心页面.png)
 
-# Dubbo 成熟度
+# 通讯协议
+
 
 ## Dubbo支持哪些协议
 
@@ -866,23 +867,177 @@ Java标准的远程调用协议，采用JDK标准的java.rmi.*实现，阻塞式
 适用范围：传入传出参数数据包大小混合，提供者比消费者个数多，可用浏览器查看，可用表单或URL传入参数，暂不支持传文件。  
 适用场景：需同时给应用程序和浏览器JS使用的服务。
 
+## 多协议
+
+Dubbo 允许配置多协议，在不同服务上支持不同协议 或者 同一服务上同时支持多种协议。
+
+### 不同服务上不同协议
+
+不同服务在性能上适用不同协议进行传输，比如大数据用短连接协议，小数据大并发用长连接协议；
+
+```xml
+
+<dubbo:application name="world"  />
+<dubbo:registry id="registry" address="10.20.141.150:9090" username="admin" password="hello1234" />
+
+<!-- 多协议配置 -->
+<dubbo:protocol name="dubbo" port="20880" />
+<dubbo:protocol name="rmi" port="1099" />
+
+<!-- 使用dubbo协议暴露服务 -->
+<dubbo:service interface="com.alibaba.hello.api.HelloService" version="1.0.0" ref="helloService" protocol="dubbo" />
+<!-- 使用rmi协议暴露服务 -->
+<dubbo:service interface="com.alibaba.hello.api.DemoService" version="1.0.0" ref="demoService" protocol="rmi" /> 
+```
+
+### 同一服务上不同协议
+
+同一服务上同时支持多种协议；
+
+```xml
+<dubbo:application name="world"  />
+<dubbo:registry id="registry" address="10.20.141.150:9090" username="admin" password="hello1234" />
+
+<!-- 多协议配置 -->
+<dubbo:protocol name="dubbo" port="20880" />
+<dubbo:protocol name="hessian" port="8080" />
+
+<!-- 使用多个协议暴露服务 -->
+<dubbo:service id="helloService" interface="com.alibaba.hello.api.HelloService" version="1.0.0" protocol="dubbo,hessian" />
+```
+
+# 序列化
+
 ## Dubbo支持哪些序列化
 
 ![支持的序列化](https://rong0624.github.io/images/Dubbo/1627984641381.jpg)
 Dubbo 支持 Hession，Dubbo，Json、Java 多种序列化方式。但是 Hessian 是其默认的序列化方式。
 
-## Dubbo支持哪些注册中心
+## Hessian 的数据结构
 
-![支持的注册中心](https://rong0624.github.io/images/Dubbo/1627983532373.jpg)  
-Zookeeper、Redis、Multicast、Simple 都可以作为Dubbo的注册中心，Dubbo官方推荐使用 Zookeeper。
+Hessian 的对象序列化机制有 8 种原始类型：
+- 原始二进制数据
+- boolean
+- 64-bit date（64 位毫秒值的日期）
+- 64-bit double
+- 32-bit int
+- 64-bit long
+- null
+- UTF-8 编码的 string
+
+另外还包括 3 种递归类型：
+- list for lists and arrays
+- map for maps and dictionaries
+- object for objects
+
+还有一种特殊的类型：
+- ref：用来表示对共享对象的引用。
+
+# 通讯框架
 
 ## Dubbo支持哪些通讯框架
 
 ![支持的通讯框架](https://rong0624.github.io/images/Dubbo/1627983850471.jpg)  
 Dubbo 支持 Netty、Mina、Grizzly 多种通讯框架，Dubbo推荐并默认使用 Netty。
 
-## Dubbo支持哪些服务容器
+# 注册中心
 
-![支持的服务容器](https://rong0624.github.io/images/Dubbo/1627986389534.jpg)
-Dubbo 支持的服务容器有三种：Spring Container，Jetty Container，Log4j Container；
-Dubbo 的服务容器只是一个简单的 Main 方法，并加载一个简单的 Spring 容器，用于暴露服务。
+## Dubbo支持哪些注册中心
+
+![支持的注册中心](https://rong0624.github.io/images/Dubbo/1627983532373.jpg)  
+Zookeeper、Redis、Multicast、Simple 都可以作为Dubbo的注册中心，Dubbo官方推荐使用 Zookeeper。
+
+## 多注册中心
+
+Dubbo 支持同一服务向多注册中心同时注册，或者不同服务分别注册到不同的注册中心上去，甚至可以同时引用注册在不同注册中心上的同名服务。  
+另外，注册中心是支持自定义扩展的。
+
+### 多注册中心注册
+
+案例：中文站有些服务来不及在青岛部署，只在杭州部署，而青岛的其它应用需要引用此服务，就可以将服务同时注册到两个注册中心。
+
+```xml
+<dubbo:application name="world"  />
+
+<!-- 多注册中心配置 -->
+<dubbo:registry id="hangzhouRegistry" address="10.20.141.150:9090" />
+<dubbo:registry id="qingdaoRegistry" address="10.20.141.151:9010" default="false" />
+
+<!-- 向多个注册中心注册 -->
+<dubbo:service interface="com.alibaba.hello.api.HelloService" version="1.0.0" ref="helloService" registry="hangzhouRegistry,qingdaoRegistry" />
+```
+
+### 不同服务使用不同注册中心
+
+CRM 有些服务是专门为国际站设计的，有些服务是专门为中文站设计的。
+
+```xml
+<dubbo:application name="world"  />
+
+<!-- 多注册中心配置 -->
+<dubbo:registry id="chinaRegistry" address="10.20.141.150:9090" />
+<dubbo:registry id="intlRegistry" address="10.20.154.177:9010" default="false" />
+
+<!-- 向中文站注册中心注册 -->
+<dubbo:service interface="com.alibaba.hello.api.HelloService" version="1.0.0" ref="helloService" registry="chinaRegistry" />
+<!-- 向国际站注册中心注册 -->
+<dubbo:service interface="com.alibaba.hello.api.DemoService" version="1.0.0" ref="demoService" registry="intlRegistry" />
+```
+
+### 多注册中心引用
+
+案例：CRM 需同时调用中文站和国际站的 PC2 服务，PC2 在中文站和国际站均有部署，接口及版本号都一样，但连的数据库不一样。
+
+```xml
+<dubbo:application name="world"  />
+
+<!-- 多注册中心配置 -->
+<dubbo:registry id="chinaRegistry" address="10.20.141.150:9090" />
+<dubbo:registry id="intlRegistry" address="10.20.154.177:9010" default="false" />
+
+<!-- 引用中文站服务 -->
+<dubbo:reference id="chinaHelloService" interface="com.alibaba.hello.api.HelloService" version="1.0.0" registry="chinaRegistry" />
+<!-- 引用国际站站服务 -->
+<dubbo:reference id="intlHelloService" interface="com.alibaba.hello.api.HelloService" version="1.0.0" registry="intlRegistry" />
+```
+
+如果只是测试环境临时需要连接两个不同注册中心，使用竖号分隔多个不同注册中心地址：
+```xml
+<dubbo:application name="world"  />
+
+<!-- 多注册中心配置，竖号分隔表示同时连接多个不同注册中心，同一注册中心的多个集群地址用逗号分隔 -->
+<dubbo:registry address="10.20.141.150:9090|10.20.154.177:9010" />
+<!-- 引用服务 -->
+<dubbo:reference id="helloService" interface="com.alibaba.hello.api.HelloService" version="1.0.0" />
+```
+
+## 注册中心宕机与Dubbo直连
+
+### 注册中心宕机问题
+
+在实际生产中，假如zookeeper注册中心宕掉，一段时间内服务消费方还是能够调用提供方的服务的，实际上它使用的本地缓存进行通讯，这只是dubbo健壮性的一种。
+
+健壮性  
+监控中心宕掉不影响使用，只是丢失部分采样数据  
+数据库宕掉后，注册中心仍能通过缓存提供服务列表查询，但不能注册新服务  
+注册中心对等集群，任意一台宕掉后，将自动切换到另一台  
+注册中心全部宕掉后，服务提供者和服务消费者仍能通过本地缓存通讯  
+服务提供者无状态，任意一台宕掉后，不影响使用  
+服务提供者全部宕掉后，服务消费者应用将无法使用，并无限次重连等待服务提供者恢复
+
+### 直连模式
+
+注册中心的作用在于保存服务提供者的位置信息，我们可以完全可以绕过注册中心——采用dubbo直连，即在服务消费方配置服务提供方的位置信息。  
+点对点直连方式，将以服务接口为单位，忽略注册中心的提供者列表，A 接口配置点对点，不影响 B 接口从注册中心获取列表。
+
+xml配置方式：
+```xml
+<dubbo:reference id="userService" 
+    interface="com.zang.gmall.service.UserService" url="dubbo://localhost:20880" />
+```
+
+注解方式：
+```java
+@Reference(url = "127.0.0.1:20880")
+UserService userService;
+```
