@@ -348,6 +348,18 @@ public class Consumer {
         // 3.创建通道（实现了自动 close 接口 自动关闭 不需要显示关闭）
         Channel channel = connection.createChannel();
 
+        // 消费消息的程序
+        DeliverCallback deliverCallback = (consumerTag, message) -> {
+            // 模拟异常
+            String msgBody = new String(message.getBody());
+            System.out.println("消费消息，消息内容：" + msgBody);
+        };
+
+        // 消费消息失败的程序
+        CancelCallback cancelCallback = (consumerTag) -> {
+            System.out.println("消费消息失败了~");
+        };
+
         /**
          * 4.接受消息
          * 参数1：监听的队列
@@ -355,12 +367,7 @@ public class Consumer {
          * 参数3：消费消息的程序
          * 参数4：消费消息失败的程序
          */
-        channel.basicConsume(QUEUE_NAME, true, (consumerTag, message) -> {
-            String msgBody = new String(message.getBody());
-            System.out.println("消费消息，消息内容：" + msgBody);
-        }, (consumerTag) -> {
-            System.out.println("消费消息失败了~");
-        });
+        channel.basicConsume(QUEUE_NAME, true, deliverCallback, cancelCallback);
     }
 
 }
@@ -389,18 +396,18 @@ public class Consumer {
 
 # 工作消息模型（work）
 
+工作队列(又称任务队列)的主要思想是避免立即执行资源密集型任务，而不得不等待它完成。
+相反我们安排任务在之后执行。我们把任务封装为消息并将其发送到队列。在后台运行的工作进
+程将弹出任务并最终执行作业。当有多个工作线程时，这些工作线程将一起处理这些任务。
+
 ## 图解
 
 ![工作消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721224055.png)  
 
-工作队列(又称任务队列)的主要思想是避免立即执行资源密集型任务，而不得不等待它完成。  
-相反我们安排任务在之后执行。我们把任务封装为消息并将其发送到队列。  
-在后台运行的工作进程将弹出任务并最终执行作业。当有多个工作线程时，这些工作线程将一起处理这些任务。
-
 思考：当有多个消费者时，我们的消息会被哪个消费者消费呢，我们又该如何均衡消费者消费信息的多少呢？  
 主要有两种模式：
 1. 轮询分发：一个消费者一条，按均分配；
-2. 公平分发：根据消费者的消费能力进行公平分发，处理快的处理的多，处理慢的处理的少；
+2. 不公平分发：根据消费者的消费能力进行分发，处理快的处理的多，处理慢的处理的少；
 
 ## 轮询分发
 
@@ -493,13 +500,14 @@ public class Consumer {
 
 ### 执行结果
 
-启动消费者进行发送消息。
-
-启动两个消息者线程，模拟两个消费者在监听队列消息消息：  
+1）启动两个消息者线程，模拟两个消费者在监听队列消息消息：  
 ![消费者1](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232358.png)  
 ![消费者2](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232422.png)  
 
-通过程序执行发现生产者总共发送 4 个消息，  
+2）启动生产者进行发送消息。
+
+3）结论
+通过生产者总共发送 4 个消息；  
 消费者 1 和消费者 2 分别分得两个消息，并且是按照有序的一个接收一次消息：  
 ![工作消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232715.png)  
 
@@ -521,14 +529,48 @@ channel.basicQos(prefetchCount);
 然后 rabbitmq 就会把该任务分配给没有那么忙的那个空闲消费者，当然如果所有的消费者都没有完成手上任务，  
 队列还在不停的添加新任务，队列有可能就会遇到队列被撑满的情况，这个时候就只能添加新的 worker 或者改变其他存储任务的策略。
 
+# Queue 队列机制
+
+# Message 消息机制
+
+## 消息属性
+
+AMQP 模型中的消息（Message）对象是带有属性（Attributes）的。有些属性及其常见，以至于 AMQP 0-9-1 明确的定义了它们，并且应用开发者们无需费心思思考这些属性名字所代表的具体含义。
+
+例如：  
+1）Content type（内容类型）  
+2）Content encoding（内容编码）  
+3）Routing key（路由键）  
+4）Delivery mode (persistent or not)  
+5）投递模式（持久化 或 非持久化）  
+6）Message priority（消息优先权）  
+7）Message publishing timestamp（消息发布的时间戳）  
+8）Expiration period（消息有效期）  
+9）Publisher application id（发布应用的 ID）  
+
+有些属性是被 AMQP 代理所使用的，但是大多数是开放给接收它们的应用解释器用的。有些属性是可选的也被称作消息头（headers）。他们跟 HTTP 协议的 X-Headers 很相似。消息属性需要在消息被发布的时候定义。
+
+## 消息主体
+
+AMQP 的消息除属性外，也含有一个有效载荷 - Payload（消息实际携带的数据），它被 AMQP 代理当作不透明的字节数组来对待。
+
+消息代理不会检查或者修改有效载荷。消息可以只包含属性而不携带有效载荷。它通常会使用类似 JSON 这种序列化的格式数据，为了节省，协议缓冲器和 MessagePack 将结构化数据序列化，以便以消息的有效载荷的形式发布。AMQP 及其同行者们通常使用 “content-type” 和 “content-encoding” 这两个字段来与消息沟通进行有效载荷的辨识工作，但这仅仅是基于约定而已。
+
+## 消息持久化
+
+### 概念
+
+消息能够以持久化的方式发布，RabbitMQ 会将此消息存储在磁盘上。如果服务器重启，持久化消息不会丢失。
+将消息发送给一个持久化的交换机或者路由给一个持久化的队列，并不会使得此消息具有持久化性质：它完全取决与消息本身的持久模式（persistence mode）。将消息以持久化方式发布时，会对性能造成一定的影响（就像数据库操作一样，健壮性的存在必定造成一些性能牺牲）。
+
 ## 消息应答
 
 ### 概念
 
 消费者完成一个任务可能需要一段时间，如果其中一个消费者处理一个长的任务并仅只完成了部分突然它挂掉了，会发生什么情况。RabbitMQ 一旦向消费者传递了一条消息，  
-便立即将该消息标记为删除。在这种情况下，突然有个消费者挂掉了，我们将丢失正在处理的消息。以及后续发送给该消费这的消息，因为它无法接收到。
+便立即将该消息标记为删除。在这种情况下，突然有个消费者挂掉了，我们将丢失正在处理的消息。
 
-为了保证消息在发送过程中不丢失，rabbitmq 引入消息应答机制，消息应答就是：消费者在接收到消息并且处理该消息之后，告诉 rabbitmq 它已经处理了，rabbitmq 可以把该消息删除了。
+为了保证消息在发送过程中不丢失，rabbitmq 引入消息应答机制，消息应答就是：**消费者在接收到消息并且处理该消息之后，告诉 rabbitmq 它已经处理了，rabbitmq 可以把该消息删除了。**
 
 rabbitmq有两种消息应答机制：
 * 自动应答
@@ -540,9 +582,11 @@ rabbitmq有两种消息应答机制：
 那么消息就丢失了,当然另一方面这种模式消费者那边可以传递过载的消息，没有对传递的消息数量进行限制，当然这样有可能使得消费者这边由于接收太多还来不及处理的消息，
 导致这些消息的积压，最终使得内存耗尽，最终这些消费者线程被操作系统杀死，所以这种模式仅适用在消费者可以高效并以某种速率能够处理这些消息的情况下使用。
 
-注意：之前的测试案例都是自动应答。
+#### 自动应答演示
 
-### 自动应答存在的问题
+注意：之前的案例都是自动应答。
+
+#### 自动应答存在的问题
 
 生产者不做任何修改，直接运行，消息发送成功，如下：  
 ![生产者发送消息](1627022937994.jpg)
@@ -581,23 +625,93 @@ public class Consumer {
 可以发现消息消费失败了，并且队列里面的消息消失了，
 而且消费者还一直处于监听状态，一直在获取消息消费，但都消费不成功，这样就导致了消息的丢失。
 
-### 消息应答方法
+### 手动应答
 
-* Channel.basicAck(long, boolean)
+#### 手动应答方法
+
+* Channel.basicAck(long deliveryTag, boolean multiple)
     - 用于肯定确认，RabbitMQ 已知道该消息并且成功的处理消息，可以将其丢弃了
-* Channel.basicNack(long, boolean, boolean)
+* Channel.basicNack(long deliveryTag, boolean multiple, boolean requeue)
     - 用于否定确认
-* Channel.basicReject(long, boolean)
+* Channel.basicReject(long deliveryTag, boolean requeue)
     - 用于否定确认
     - 与 Channel.basicNack 相比少一个参数，不处理该消息了直接拒绝，可以将其丢弃了
 
-### Multiple 的解释
+#### Multiple 的解释
 
-### 手动应答
+multiple 表示批量应答； 
+```
+void basicAck(long deliveryTag, boolean multiple) throws IOException;
+
+void basicReject(long deliveryTag, boolean requeue) throws IOException;
+```
+
+multiple 的 true 和 false 代表不同意思
+* true
+    - 代表批量应答 channel 上未应答的消息
+    - 比如说 channel 上有传送 tag 的消息 5,6,7,8 当前 tag 是 8 那么此时5-8 的这些还未应答的消息都会被确认收到消息应答
+* false
+    - 只会应答 tag=8 的消息 5,6,7 这三个消息依然不会被确认收到消息应答
+
+![批量应答](1628672592616.jpg)
+
+#### 手动应答演示
+
+手动应答只需要改动消费者：
+```java
+public class Consumer {
+
+    private final static String QUEUE_NAME = "work_queue";
+
+    public static void main(String[] args) throws Exception {
+        // 获取通道
+        Channel channel = RabbitMqUtils.getChannel();
+
+        // 消费消息的程序
+        DeliverCallback deliverCallback = (consumerTag, message) -> {
+            // 模拟异常
+            String msgBody = new String(message.getBody());
+            System.out.println("消费消息，消息内容：" + msgBody);
+            /**
+             * 手动ack应答
+             * 参数1：消息标记tag
+             * 参数2：批量应答通道内未应答的消息
+             */
+            channel.basicAck(message.getEnvelope().getDeliveryTag(), false);
+        };
+
+        // 消费消息失败的程序
+        CancelCallback cancelCallback = (consumerTag) -> {
+            System.out.println("消费消息失败了~");
+        };
+
+        /**
+         * 接受消息
+         * 参数1：监听的队列
+         * 参数2：是否自动应答
+         * 参数3：消费消息的程序
+         * 参数4：消费消息失败的程序
+         */
+        // 手动应答
+        boolean autoAck = false;
+        channel.basicConsume(QUEUE_NAME, autoAck, deliverCallback, cancelCallback);
+    }
+
+}
+```
+
+### 消息重新入队
+
+如果消费者由于某些原因失去连接(其通道已关闭，连接已关闭或 TCP 连接丢失)，导致消息未发送 ACK 确认，
+RabbitMQ 将了解到消息未完全处理，并将对其重新排队。如果此时其他消费者可以处理，它将很快将其重新分发给另一个消费者。
+这样，即使某个消费者偶尔死亡，也可以确保不会丢失任何消息。
+
+![消息重新入队](1628673375555.jpg)
 
 
+## 预取消息
 
-
+# 持久化
 
 # 交换机
 
