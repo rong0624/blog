@@ -25,7 +25,7 @@ RabbitMQ官方地址：http://www.rabbitmq.com
 
 ## 核心概念
 
-![AMQP模型](https://rong0624.github.io/images/MQ/amqp模型.png)
+![AMQP模型](https://rong0624.gitee.io/images/MQ/amqp模型.png)
 
 1）Broker  
 表示消息队列服务器实体（一个进程）。  
@@ -70,7 +70,7 @@ Channel，每个Channel代表一个会话任务。
 
 ## 消息模型
 
-![消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/1626769058993.jpg)
+![消息模型](https://rong0624.gitee.io/images/MQ/RabbitMQ/1626769058993.jpg)
 
 1. 基本消息模型（simple）
 2. 工作消息模型（work）
@@ -107,7 +107,7 @@ rabbitmq 3.8.8
 
 ### 安装Erlang
 
-![erlang版本信息](https://rong0624.github.io/images/MQ/RabbitMQ/erlang版本.png)   
+![erlang版本信息](https://rong0624.gitee.io/images/MQ/RabbitMQ/erlang版本.png)   
 下载erlang时需要注意，要和rabbitmq版本兼容.
 
 1）erlang rpm下载：
@@ -194,11 +194,11 @@ systemctl disable firewalld
 http://106.52.180.14:15672
 ```
 
-成功访问：![RabbitMQ管理界面](https://rong0624.github.io/images/MQ/RabbitMQ/1626777167279.jpg)
+成功访问：![RabbitMQ管理界面](https://rong0624.gitee.io/images/MQ/RabbitMQ/1626777167279.jpg)
 
 ### 授权账号和密码
 
-![guest登录](https://rong0624.github.io/images/MQ/RabbitMQ/20210721213622.png)  
+![guest登录](https://rong0624.gitee.io/images/MQ/RabbitMQ/20210721213622.png)  
 说明：rabbitmq有一个默认账号和密码是：guest/guest，但guest默认情况只能在localhost本机下访问，所以需要添加一个远程登录的用户。
 
 1）新增用户并授权：
@@ -217,7 +217,7 @@ rabbitmqctl set_permissions -p "/" admin ".*" ".*" ".*"
 
 2）使用admin登录管理页面
 登录成功：  
-![admin登录](https://rong0624.github.io/images/MQ/RabbitMQ/20210721215337.png)  
+![admin登录](https://rong0624.gitee.io/images/MQ/RabbitMQ/20210721215337.png)  
 
 ### 小结
 
@@ -259,7 +259,7 @@ RabbitMQ 3.8.8
 
 ## 图解
 
-![简单消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721223009.png)  
+![简单消息模型](https://rong0624.gitee.io/images/MQ/RabbitMQ/20210721223009.png)  
 在上图的模型中，有以下概念：
 1. 生产者，也就是要发送消息的程序
 2. 消费者：消息的接受者，会一直等待消息到来。
@@ -378,21 +378,21 @@ public class Consumer {
 1）启动生产者，发送消息
 
 启动生产者，发送消息：  
-![生产者发送消息](https://rong0624.github.io/images/MQ/RabbitMQ/1626949235794.jpg)
+![生产者发送消息](https://rong0624.gitee.io/images/MQ/RabbitMQ/1626949235794.jpg)
 
 查看管理页面，可以发现：新建了一个队列：Hello，并且队列里有一条消息等待读取：  
-![管理页面，查看队列](https://rong0624.github.io/images/MQ/RabbitMQ/1626949728101.jpg)
+![管理页面，查看队列](https://rong0624.gitee.io/images/MQ/RabbitMQ/1626949728101.jpg)
 
 进入队列详情，还可以看到消息主题内容：  
-![管理页面，查看消息主体内容](https://rong0624.github.io/images/MQ/RabbitMQ/1626949629441.jpg)
+![管理页面，查看消息主体内容](https://rong0624.gitee.io/images/MQ/RabbitMQ/1626949629441.jpg)
 
 2）启动消费者，消费消息
 
 启动消费者，消费消息：  
-![消费者消费消息](https://rong0624.github.io/images/MQ/RabbitMQ/1626949896540.jpg)
+![消费者消费消息](https://rong0624.gitee.io/images/MQ/RabbitMQ/1626949896540.jpg)
 
 查看管理页面，可以发现：Hello队列，消息已经被消费了：  
-![管理页面，查看队列](https://rong0624.github.io/images/MQ/RabbitMQ/1626949947003.jpg)
+![管理页面，查看队列](https://rong0624.gitee.io/images/MQ/RabbitMQ/1626949947003.jpg)
 
 # 工作消息模型（work）
 
@@ -402,7 +402,7 @@ public class Consumer {
 
 ## 图解
 
-![工作消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721224055.png)  
+![工作消息模型](https://rong0624.gitee.io/images/MQ/RabbitMQ/20210721224055.png)  
 
 思考：当有多个消费者时，我们的消息会被哪个消费者消费呢，我们又该如何均衡消费者消费信息的多少呢？  
 主要有两种模式：
@@ -501,15 +501,15 @@ public class Consumer {
 ### 执行结果
 
 1）启动两个消息者线程，模拟两个消费者在监听队列消息消息：  
-![消费者1](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232358.png)  
-![消费者2](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232422.png)  
+![消费者1](https://rong0624.gitee.io/images/MQ/RabbitMQ/20210721232358.png)  
+![消费者2](https://rong0624.gitee.io/images/MQ/RabbitMQ/20210721232422.png)  
 
 2）启动生产者进行发送消息。
 
 3）结论
 通过生产者总共发送 4 个消息；  
 消费者 1 和消费者 2 分别分得两个消息，并且是按照有序的一个接收一次消息：  
-![工作消息模型](https://rong0624.github.io/images/MQ/RabbitMQ/20210721232715.png)  
+![工作消息模型](https://rong0624.gitee.io/images/MQ/RabbitMQ/20210721232715.png)  
 
 ## 不公平分发（能者多劳）
 
@@ -523,13 +523,37 @@ Integer prefetchCount = 1
 channel.basicQos(prefetchCount);
 ```
 
-![不公平分发图](https://rong0624.github.io/images/MQ/RabbitMQ/1626919721516.jpg)
+![不公平分发图](https://rong0624.gitee.io/images/MQ/RabbitMQ/1626919721516.jpg)
 
 解释：如果这个任务我还没有处理完或者我还没有应答你，你先别分配给我，我目前只能处理一个任务，  
 然后 rabbitmq 就会把该任务分配给没有那么忙的那个空闲消费者，当然如果所有的消费者都没有完成手上任务，  
 队列还在不停的添加新任务，队列有可能就会遇到队列被撑满的情况，这个时候就只能添加新的 worker 或者改变其他存储任务的策略。
 
 # Queue 队列机制
+
+AMQP中的队列（Queue）跟其他消息队列或任务队列中的队列是很相似的，它们存储着即将被应用消费掉的消息。
+
+## 持久化
+
+### 概念
+
+持久化队列（Durable queues）会被存储在磁盘上，当消息代理（broker）重启的时候，它依旧存在。没有被持久化的队列称作暂存队列（Transient queues）。并不是所有的场景和案例都需要将队列持久化。  
+持久化的队列并不会使得路由到它的消息也具有持久性。倘若消息代理挂掉了，重新启动，那么在重启的过程中持久化队列会被重新声明，无论怎样，只有经过持久化的消息才能被重新恢复。
+
+### 队列实现持久化
+
+如果要队列实现持久化，需要在声明队列的时通过 durable 参数设置为持久化；
+
+```
+// 队列持久化
+boolean durable = true;
+channel.queueDeclare(QUEUE_NAME, durable, false, false, null);
+```
+
+注意：如果之前声明的队列不是持久化的，需要把原先队列先删除，或者重新创建一个持久化的队列，不然就会出现错误；
+
+以下为控制台中持久化与非持久化队列的 UI 显示区别：  
+![消息队列持久化与非持久化的区别](1630306750298.jpg)
 
 # Message 消息机制
 
@@ -563,6 +587,19 @@ AMQP 的消息除属性外，也含有一个有效载荷 - Payload（消息实�
 消息能够以持久化的方式发布，RabbitMQ 会将此消息存储在磁盘上。如果服务器重启，持久化消息不会丢失。
 将消息发送给一个持久化的交换机或者路由给一个持久化的队列，并不会使得此消息具有持久化性质：它完全取决与消息本身的持久模式（persistence mode）。将消息以持久化方式发布时，会对性能造成一定的影响（就像数据库操作一样，健壮性的存在必定造成一些性能牺牲）。
 
+注意：RabbitMQ的消息是依附于队列存在的，所以想要消息持久化，那么前提是队列也要持久化。
+
+### 消息实现持久化
+
+要想让消息实现持久化需要在消息生产者修改代码，在发送消息时添加属性：MessageProperties.PERSISTENT_TEXT_PLAIN 。
+
+```
+// channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+channel.basicPublish("", QUEUE_NAME, MessageProperties.PERSISTENT_TEXT_PLAIN, message.getBytes());
+```
+
+将消息标记为持久化并不能完全保证不会丢失消息。尽管它告诉 RabbitMQ 将消息保存到磁盘，但是这里依然存在当消息刚准备存储在磁盘的时候 但是还没有存储完，消息还在缓存的一个间隔点。此时并没有真正写入磁盘。持久性保证并不强，但是对于我们的简单任务队列而言，这已经绰绰有余了。如果需要更强有力的持久化策略，参考后边发布确认章节。
+
 ## 消息应答
 
 ### 概念
@@ -589,7 +626,7 @@ rabbitmq有两种消息应答机制：
 #### 自动应答存在的问题
 
 生产者不做任何修改，直接运行，消息发送成功，如下：  
-![生产者发送消息](1627022937994.jpg)
+![生产者发送消息](https://rong0624.gitee.io/images/MQ/RabbitMQ/1627022937994.jpg)
 
 修改消费者，添加异常，代码如下：
 ```java
@@ -653,7 +690,7 @@ multiple 的 true 和 false 代表不同意思
 * false
     - 只会应答 tag=8 的消息 5,6,7 这三个消息依然不会被确认收到消息应答
 
-![批量应答](1628672592616.jpg)
+![批量应答](https://rong0624.gitee.io/images/MQ/RabbitMQ/1628672592616.jpg)
 
 #### 手动应答演示
 
@@ -700,16 +737,54 @@ public class Consumer {
 }
 ```
 
-### 消息重新入队
+### 消息自动重新入队
 
 如果消费者由于某些原因失去连接(其通道已关闭，连接已关闭或 TCP 连接丢失)，导致消息未发送 ACK 确认，
 RabbitMQ 将了解到消息未完全处理，并将对其重新排队。如果此时其他消费者可以处理，它将很快将其重新分发给另一个消费者。
 这样，即使某个消费者偶尔死亡，也可以确保不会丢失任何消息。
 
-![消息重新入队](1628673375555.jpg)
-
+![消息重新入队](https://rong0624.gitee.io/images/MQ/RabbitMQ/1628673375555.jpg)
 
 ## 预取消息
+
+### 官方解释
+
+在多个消费者共享一个队列的案例中，明确指定在收到下一个确认回执前每个消费者一次可以接受多少条消息是非常有用的。这可以在试图批量发布消息的时候起到简单的负载均衡和提高消息吞吐量的作用。For example, if a producing application sends messages every minute because of the nature of the work it is doing.（？？？例如，如果生产应用每分钟才发送一条消息，这说明处理工作尚在运行。）
+
+注意，RabbitMQ 只支持通道级的预取计数，而不是连接级的或者基于大小的预取。
+
+### 深入了解
+
+消息的发送就是异步发送的，所以在任何时候，channel 上肯定不止只有一个消息另外来自消费
+者的手动确认本质上也是异步的。因此这里就存在一个未确认的消息缓冲区，因此希望开发人员能限制此
+缓冲区的大小，以避免缓冲区里面无限制的未确认消息问题。这个时候就可以通过使用 basic.qos 方法设
+置“预取计数”值来完成的。该值定义通道上允许的未确认消息的最大数量。一旦数量达到配置的数量，
+RabbitMQ 将停止在通道上传递更多消息，除非至少有一个未处理的消息被确认，例如，假设在通道上有
+未确认的消息 5、6、7，8，并且通道的预取计数设置为 4，此时 RabbitMQ 将不会在该通道上再传递任何
+消息，除非至少有一个未应答的消息被 ack。比方说 tag=6 这个消息刚刚被确认 ACK，RabbitMQ 将会感知
+这个情况到并再发送一条消息。消息应答和 QoS 预取值对用户吞吐量有重大影响。通常，增加预取将提高
+向消费者传递消息的速度。虽然自动应答传输消息速率是最佳的，但是，在这种情况下已传递但尚未处理
+的消息的数量也会增加，从而增加了消费者的 RAM 消耗(随机存取存储器)应该小心使用具有无限预处理
+的自动确认模式或手动确认模式，消费者消费了大量的消息如果没有确认的话，会导致消费者连接节点的
+内存消耗变大，所以找到合适的预取值是一个反复试验的过程，不同的负载该值取值也不同 100 到 300 范
+围内的值通常可提供最佳的吞吐量，并且不会给消费者带来太大的风险。预取值为 1 是最保守的。当然这
+将使吞吐量变得很低，特别是消费者连接延迟很严重的情况下，特别是在消费者连接等待时间较长的环境
+中。对于大多数应用来说，稍微高一点的值将是最佳的。
+
+### 实现预取消息
+
+如果要实现预取消息，需要在消费者进行配置
+
+```
+// 设置消息预取，设置为5
+// 如果未ack的消息=5，则不会从mq中获取消息了
+Integer prefetchCount = 5;
+channel.basicQos(prefetchCount);
+```
+
+## 消息确认
+
+
 
 # 持久化
 

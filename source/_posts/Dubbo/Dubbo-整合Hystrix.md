@@ -118,9 +118,9 @@ public class Provider {
 启动提供者和消费者，访问：http://localhost:8080/dubbo
 
 正常访问：  
-![服务熔断正常访问](https://rong0624.github.io/images/Dubbo/1627894884676.jpg)
+![服务熔断正常访问](https://rong0624.gitee.io/images/Dubbo/1627894884676.jpg)
 
 异常访问：  
-![服务熔断异常访问](https://rong0624.github.io/images/Dubbo/1627894974462.jpg)
+![服务熔断异常访问](https://rong0624.gitee.io/images/Dubbo/1627894974462.jpg)
 
 结论：Hystrix有强大的容错能力，无论是超时还是错误，都可以调用备用方法返回。

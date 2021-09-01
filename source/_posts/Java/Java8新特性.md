@@ -122,7 +122,7 @@ Boolean test(T t);
 
 ## 其他接口
 
-![其他函数式接口](https://rong0624.github.io/images/Java/JDK/其他函数式接口.png)
+![其他函数式接口](https://rong0624.gitee.io/images/Java/JDK/其他函数式接口.png)
 
 # 方法引用与构造函数引用
 
@@ -233,7 +233,7 @@ Stream API是Java8中处理集合的关键抽象概念，它可以指定你希�
 一个终止操作，执行中间操作链，并且产生结果
 
 流程图：  
-![Stream操作流程图](https://rong0624.github.io/images/Java/JDK/Stream操作流程图.png)
+![Stream操作流程图](https://rong0624.gitee.io/images/Java/JDK/Stream操作流程图.png)
 
 ## 创建Stream
 
@@ -437,7 +437,7 @@ public void reduceTest() {
 collect(Collector c) ：将流转换为其他形式，接受一个Collector接口的实现，用于给Stream中元素做汇总操作。
 
 Collector 接口中方法的实现决定了如何对流执行收集操作（如：收集到List，Set，Map）。但是Collectors 实现类提供了很多静态方法，可以方便的创建常见收集器实例，具体方法与实例如下表：  
-![常见收集器方法](https://rong0624.github.io/images/Java/JDK/常见收集器方法.png)
+![常见收集器方法](https://rong0624.gitee.io/images/Java/JDK/常见收集器方法.png)
 
 案例：
 ```java

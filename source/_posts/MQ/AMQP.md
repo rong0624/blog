@@ -23,7 +23,7 @@ AMQP（Advanced Message Queuing Protocol，高级消息队列协议）是一个�
 
 ## AMQP模型
 
-![AMQP模型](https://rong0624.github.io/images/MQ/amqp模型.png)
+![AMQP模型](https://rong0624.gitee.io/images/MQ/amqp模型.png)
 
 1）Broker  
 表示消息队列服务器实体（一个进程）。  
@@ -72,7 +72,7 @@ Channel，每个Channel代表一个会话任务。
 
 ### 生产者工作流程
 
-![生产者工作流程](https://rong0624.github.io/images/MQ/1626761231258.jpg)
+![生产者工作流程](https://rong0624.gitee.io/images/MQ/1626761231258.jpg)
 
 生产者发布消息流程：  
 1、生产者和Broker建立TCP连接。  
@@ -82,7 +82,7 @@ Channel，每个Channel代表一个会话任务。
 
 ### 消费者工作流程
 
-![消费者工作流程](https://rong0624.github.io/images/MQ/1626761231333.jpg)
+![消费者工作流程](https://rong0624.gitee.io/images/MQ/1626761231333.jpg)
 
 消费者消费消息流程：  
 1、消费者和Broker建立TCP连接  
@@ -99,7 +99,7 @@ Channel，每个Channel代表一个会话任务。
 它使用哪种路由算法是由交换机类型和绑定（Bindings）规则所决定的。
 
 AMQP 0-9-1的代理提供了四种交换机：  
-![交换机类型](https://rong0624.github.io/images/MQ/交换机类型.png)  
+![交换机类型](https://rong0624.gitee.io/images/MQ/交换机类型.png)  
 
 除交换机类型外，在声明交换机时还可以附带许多其他的属性，其中最重要的几个分别是：  
 Name  
@@ -136,7 +136,7 @@ Arguments（依赖代理本身）
 比如说有3个消费者，4个任务。分别分发每个消费者一个任务后，第4个任务又分发给了第一个消费者。综上，我们很容易得出一个结论：在AMQP 0-9-1中，消息的负载均衡是发生在消费者（consumer）之间的，而不是队列（queue）之间。
 
 直连型交换机图例：  
-![直连交换机图解](https://rong0624.github.io/images/MQ/直连交换机图解.png)
+![直连交换机图解](https://rong0624.gitee.io/images/MQ/直连交换机图解.png)
 
 当生产者（P）发送消息时 Rotuing key=booking 时，这时候将消息传送给 Exchange，Exchange 获取到生产者发送过来消息后，会根据自身的规则进行与匹配相应的 Queue，这时发现 Queue1 和 Queue2 都符合，就会将消息传送给这两个队列。
 
@@ -155,7 +155,7 @@ Arguments（依赖代理本身）
 4）在群聊的时候，它被用来分发消息给参与群聊的用户。（AMQP没有内置presence的概念，因此XMPP可能会是个更好的选择）
 
 扇型交换机图例：  
-![扇型交换机图解](https://rong0624.github.io/images/MQ/扇型交换机图解.png)
+![扇型交换机图解](https://rong0624.gitee.io/images/MQ/扇型交换机图解.png)
 
 上图所示，生产者（P）生产消息 1 将消息 1 推送到 Exchange，由于 Exchange Type=fanout 这时候会遵循 fanout 的规则将消息推送到所有与它绑定 Queue，也就是图上的两个 Queue 最后两个消费者消费。
 
@@ -175,7 +175,7 @@ Arguments（依赖代理本身）
 3）binding key 与 routing key 一样也是句点号 “.” 分隔的字符串
 
 主题交换机图例：  
-![主题交换机图解](https://rong0624.github.io/images/MQ/主题交换机图解.png)
+![主题交换机图解](https://rong0624.gitee.io/images/MQ/主题交换机图解.png)
 
 当生产者发送消息 Routing Key=F.C.E 的时候，这时候只满足 Queue1，所以会被路由到 Queue 中，如果 Routing Key=A.C.E 这时候会被同是路由到 Queue1 和 Queue2 中，如果 Routing Key=A.F.B 时，这里只会发送一条消息到 Queue2 中。
 

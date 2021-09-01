@@ -38,7 +38,7 @@ ActiveMQ 是一个完全支持JMS1.1和J2EE 1.4规范的 JMS Provider实现。
 1）点对点（p2p），即一个生产者和一个消费者一一对应；  
 2）发布/订阅，即一个生产者产生消息并进行发送后，可以由多个消费者进行接收；  
 如图所示：  
-![ActiveMQ的消息类型](https://rong0624.github.io/images/MQ/ActiveMQ/ActiveMQ的消息类型.png)
+![ActiveMQ的消息类型](https://rong0624.gitee.io/images/MQ/ActiveMQ/ActiveMQ的消息类型.png)
 
 JMS定义了五种不同的消息正文格式，以及调用的消息类型，允许你发送并接收以一些不同形式的数据，提供现有消息格式的一些级别的兼容性。
 * StreamMessage -- Java原始值的数据流

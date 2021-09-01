@@ -36,7 +36,7 @@ Dubbo 推荐在 Provider 上尽量多配置 Consumer 端属性。
 
 ## Dubbo 属性配置优先级
 
-![属性配置优先级](https://rong0624.github.io/images/Dubbo/属性配置覆盖规则.png)
+![属性配置优先级](https://rong0624.gitee.io/images/Dubbo/属性配置覆盖规则.png)
 
 1）方法级配置别优于接口级别，接口级别优于全局配置，即小Scope优先 
 2）Consumer端配置优于 Provider配置
@@ -44,7 +44,7 @@ Dubbo 推荐在 Provider 上尽量多配置 Consumer 端属性。
 
 ## Dubbo 配置文件优先级
 
-![配置文件优先级](https://rong0624.github.io/images/Dubbo/配置文件覆盖规则.png)
+![配置文件优先级](https://rong0624.gitee.io/images/Dubbo/配置文件覆盖规则.png)
 
 1）JVM 启动 -D 参数优先，这样可以使用户在部署和启动时进行参数重写，比如在启动时需改变协议的端口。  
 2）XML 次之，如果在 XML 中有配置，则 dubbo.properties 中的相应配置项无效。  
@@ -140,7 +140,7 @@ Dubbo 在不同服务上支持不同协议 或者 同一服务上同时支持多
 
 ## Dubbo 支持哪些序列化
 
-![支持的序列化](https://rong0624.github.io/images/Dubbo/1627984641381.jpg)
+![支持的序列化](https://rong0624.gitee.io/images/Dubbo/1627984641381.jpg)
 Dubbo 支持 Hession，Dubbo，Json、Java自带序列化 多种序列化方式。但是 Hessian 是其默认的序列化方式。
 
 ## Dubbo 序列化特点
@@ -194,14 +194,14 @@ Protocol Buffer 其实是 Google 出品的一种轻量并且高效的结构化�
 
 ## Dubbo 正常哪些通信框架，推荐使用什么？
 
-![支持的通讯框架](https://rong0624.github.io/images/Dubbo/1627983850471.jpg)  
+![支持的通讯框架](https://rong0624.gitee.io/images/Dubbo/1627983850471.jpg)  
 Dubbo 支持 Netty、Mina、Grizzly 多种通讯框架，Dubbo 推荐并默认使用 Netty。
 
 # 注册中心
 
 ## Dubbo 支持哪些注册中心？
 
-![支持的注册中心](https://rong0624.github.io/images/Dubbo/1627983532373.jpg)  
+![支持的注册中心](https://rong0624.gitee.io/images/Dubbo/1627983532373.jpg)  
 Zookeeper、Redis、Multicast、Simple 都可以作为Dubbo的注册中心，Dubbo官方推荐使用 Zookeeper。
 
 ## Dubbo 的注册中心挂掉，服务提供者和服务消费者之间还能通信么？

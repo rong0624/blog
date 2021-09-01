@@ -244,9 +244,9 @@ Java SPI 约定在 Classpath 下的 META-INF/services/ 目录里创建一个**�
 这样当我们引用了某个jar包的时候，就可以去找这个jar包的META-INF/services/目录，再根据接口名找到文件，然后读取文件里面的内容去进行实现类的加载与实例化。
 
 看个案例：看下MySql是怎么做的：  
-![MySql SPI实现1](https://rong0624.github.io/images/Dubbo/MySql_SPI实现1.png)
+![MySql SPI实现1](https://rong0624.gitee.io/images/Dubbo/MySql_SPI实现1.png)
 再看下文件里的内容：  
-![MySql SPI实现2](https://rong0624.github.io/images/Dubbo/MySql_SPI实现2.png)
+![MySql SPI实现2](https://rong0624.gitee.io/images/Dubbo/MySql_SPI实现2.png)
 
 ### Java SPI 缺点
 
@@ -573,7 +573,7 @@ dubbo 内置了 spring, jetty, log4j 等服务容器；
 ## 容器启动
 
 SPI 容器扩展类：`org.apache.dubbo.container.Container`
-![SPI 容器扩展类](https://rong0624.github.io/images/Dubbo/1628502633574.jpg)
+![SPI 容器扩展类](https://rong0624.gitee.io/images/Dubbo/1628502633574.jpg)
 
 `org.apache.dubbo.container.Main` 是服务启动的主类，在服务启动时会调用容器的 start() 方法，在服务停止时会调用 stop() 方法；
 
@@ -634,7 +634,7 @@ RPC【Remote Procedure Call】是指远程过程调用，是一种进程间通�
 
 ## RPC模型
 
-![rpc模型](https://rong0624.github.io/images/Dubbo/rpc通讯.png)  
+![rpc模型](https://rong0624.gitee.io/images/Dubbo/rpc通讯.png)  
 
 1. Client：客户端；服务调用方。
 2. Client Stub：客户端存根；存放服务端地址信息，将客户端的请求信息进行编码，再通过网络传输给发送端 or 接受服务端的响应数据，进行解码。
@@ -645,7 +645,7 @@ RPC【Remote Procedure Call】是指远程过程调用，是一种进程间通�
 
 ## RPC调用过程
 
-![rpc序列化](https://rong0624.github.io/images/Dubbo/rpc序列化.png)
+![rpc序列化](https://rong0624.gitee.io/images/Dubbo/rpc序列化.png)
 
 ```
 一次完整的RPC调用流程（同步调用，异步另说）如下： 
@@ -665,7 +665,7 @@ RPC框架的目标就是要2~8这些步骤都封装起来，这些细节对用�
 
 ## Dubbo-架构设计
 
-![dubbo框架设计](https://rong0624.github.io/images/Dubbo/1627979178965.jpg)
+![dubbo框架设计](https://rong0624.gitee.io/images/Dubbo/1627979178965.jpg)
 
 ### 分类
 
@@ -688,16 +688,16 @@ RPC框架的目标就是要2~8这些步骤都封装起来，这些细节对用�
 
 ## Dubbo-启动解析，加载配置
 
-![启动解析](https://rong0624.github.io/images/Dubbo/1627981581425.jpg)
+![启动解析](https://rong0624.gitee.io/images/Dubbo/1627981581425.jpg)
 
 ## Dubbo-服务暴露
 
-![服务暴露](https://rong0624.github.io/images/Dubbo/1627981689580.jpg)
+![服务暴露](https://rong0624.gitee.io/images/Dubbo/1627981689580.jpg)
 
 ## Dubbo-服务引用
 
-![服务引用](https://rong0624.github.io/images/Dubbo/1627981770108.jpg)
+![服务引用](https://rong0624.gitee.io/images/Dubbo/1627981770108.jpg)
 
 ## Dubbo-服务调用
 
-![服务调用](https://rong0624.github.io/images/Dubbo/1627981894490.jpg)
+![服务调用](https://rong0624.gitee.io/images/Dubbo/1627981894490.jpg)
