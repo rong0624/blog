@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yourname.github.io","root":"/blog/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="MySQL日志分类注意：设置系统参数方式修改，需要重新连接一个会话，如mysql重启即失效，如果要永久存在则需要修改配置文件。如果想要当前会话生效通过set sesison进行设置。 日志分类Mysql有7种日志文件，分别是：1）errorlog（错误日志）2）generallog（普通日志）3）slow query log（慢查询日志）4）binlog（二进制日志）5）relaylog（中继日志">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MySQL-日志系统">
+<meta property="og:url" content="https://yourname.github.io/blog/2021/06/22/MySQL/MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="神奇的荣荣">
+<meta property="og:description" content="MySQL日志分类注意：设置系统参数方式修改，需要重新连接一个会话，如mysql重启即失效，如果要永久存在则需要修改配置文件。如果想要当前会话生效通过set sesison进行设置。 日志分类Mysql有7种日志文件，分别是：1）errorlog（错误日志）2）generallog（普通日志）3）slow query log（慢查询日志）4）binlog（二进制日志）5）relaylog（中继日志">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MySQL/1624261484667.jpg">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MySQL/%E6%97%A5%E5%BF%97%E6%9F%A5%E8%AF%A2%E5%88%86%E6%9E%90%E5%99%A8%E4%BD%BF%E7%94%A8.jpg">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MySQL/1624350274231.jpg">
+<meta property="article:published_time" content="2021-06-21T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-01T07:05:29.995Z">
+<meta property="article:author" content="神奇的荣荣">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://rong0624.gitee.io/images/MySQL/1624261484667.jpg">
+
+<link rel="canonical" href="https://yourname.github.io/blog/2021/06/22/MySQL/MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>MySQL-日志系统 | 神奇的荣荣</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">神奇的荣荣</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">神奇的荣荣の博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yourname.github.io/blog/2021/06/22/MySQL/MySQL-%E6%97%A5%E5%BF%97%E7%B3%BB%E7%BB%9F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="神奇的荣荣">
+      <meta itemprop="description" content="新知识要不断的总结记录成笔记，要多写，多画，能够清晰透彻的将知识讲给别人听，才是达到理解的层次。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="神奇的荣荣">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MySQL-日志系统
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-06-22 00:00:00" itemprop="dateCreated datePublished" datetime="2021-06-22T00:00:00+08:00">2021-06-22</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-09-01 15:05:29" itemprop="dateModified" datetime="2021-09-01T15:05:29+08:00">2021-09-01</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/MySQL/" itemprop="url" rel="index"><span itemprop="name">MySQL</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="MySQL日志分类"><a href="#MySQL日志分类" class="headerlink" title="MySQL日志分类"></a>MySQL日志分类</h1><p>注意：<br>设置系统参数方式修改，需要重新连接一个会话，如mysql重启即失效，如果要永久存在则需要修改配置文件。<br>如果想要当前会话生效通过set sesison进行设置。</p>
+<h2 id="日志分类"><a href="#日志分类" class="headerlink" title="日志分类"></a>日志分类</h2><p>Mysql有7种日志文件，分别是：<br>1）errorlog（错误日志）<br>2）generallog（普通日志）<br>3）slow query log（慢查询日志）<br>4）binlog（二进制日志）<br>5）relaylog（中继日志）<br>6）redolog（重做日志）<br>7）undolog（回滚日志）</p>
+<hr>
+<span id="more"></span>
+
+<h2 id="重要日志"><a href="#重要日志" class="headerlink" title="重要日志"></a>重要日志</h2><p>slow query log：慢查询日志<br>undolog-redolog：事务日志（innoDB存储引擎日志）<br>binlog：二进制日志（server层日志）<br>relaylog：中继日志（主从复制）</p>
+<hr>
+<h1 id="error-log（错误日志）"><a href="#error-log（错误日志）" class="headerlink" title="error log（错误日志）"></a>error log（错误日志）</h1><h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p>error log 是 MySQL 的错误日志。<br>主要记录 MySQL 服务实例每次启动，停止的详细信息，以及 MySQL 实例运行过程中产生的警告或者错误信息。<br>和其他的日志不同，MySQL的error日志必须开启，无法关闭。</p>
+<p><strong>注意：默认情况下，错误日志的文件名为：主机名.err。 但 error 日志并不会记录所有的错误信息，只有MySQL服务实例运行过程中发声的关键错误（critical）才会被记录下来。</strong></p>
+<hr>
+<h2 id="设置错误日志"><a href="#设置错误日志" class="headerlink" title="设置错误日志"></a>设置错误日志</h2><p>查看当前的错误日志文件<br>没有设置错误日志文件，默认指定了一个的错误日志文件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show variables like &#x27;log_error&#x27;;</span><br><span class="line">+---------------+----------------------+</span><br><span class="line">| Variable_name | Value                |</span><br><span class="line">+---------------+----------------------+</span><br><span class="line">| log_error     | ./VM-16-4-centos.err |</span><br><span class="line">+---------------+----------------------+</span><br><span class="line">1 row in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;log_error&#x27;</span>; #查看当前的错误日志文件，如果没有指定，默认有一个错误日志文件</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> log_error <span class="operator">=</span> <span class="string">&#x27;/var/lib/mysql/error.log&#x27;</span>; #设置错误日志文件</span><br></pre></td></tr></table></figure>
+
+<p>修改配置文件：<br>修改 my.cnf 文件，在 [mysqld] 下增加或修改参数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[mysqld]</span><br><span class="line">log-error=&#x27;/var/lib/mysql/error.log&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>当前通过修改配置文件指定错误配置文件，重启服务配置生效<br>可以看到当启动服务后，打印出Starting MySQL.Logging to ‘/var/lib/mysql/error.log’<br>这代表设置成功！</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@VM-16-4-centos mysql]# service mysql stop</span><br><span class="line">Shutting down MySQL. SUCCESS! </span><br><span class="line">[root@VM-16-4-centos mysql]# service mysql start</span><br><span class="line">Starting MySQL.Logging to &#x27;/var/lib/mysql/error.log&#x27;.</span><br><span class="line">. SUCCESS! </span><br></pre></td></tr></table></figure>
+
+<p>查看错误日志文件：<br>发现 mysql 实例启动的日志【验证了错误日志会记录实例每次启动，停止的详细信息】</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[root@VM-16-4-centos mysql]# cat /var/lib/mysql/error.log </span><br><span class="line">210621 18:35:41 [Note] Plugin &#x27;FEDERATED&#x27; is disabled.</span><br><span class="line">210621 18:35:41 InnoDB: The InnoDB memory heap is disabled</span><br><span class="line">210621 18:35:41 InnoDB: Mutexes and rw_locks use GCC atomic builtins</span><br><span class="line">210621 18:35:41 InnoDB: Compressed tables use zlib 1.2.11</span><br><span class="line">210621 18:35:41 InnoDB: Using Linux native AIO</span><br><span class="line">210621 18:35:41 InnoDB: Initializing buffer pool, size = 128.0M</span><br><span class="line">210621 18:35:41 InnoDB: Completed initialization of buffer pool</span><br><span class="line">210621 18:35:41 InnoDB: highest supported file format is Barracuda.</span><br><span class="line">210621 18:35:41  InnoDB: Waiting for the background threads to start</span><br><span class="line">210621 18:35:42 InnoDB: 5.5.62 started; log sequence number 1598913</span><br><span class="line">210621 18:35:42 [Note] Server hostname (bind-address): &#x27;0.0.0.0&#x27;; port: 3306</span><br><span class="line">210621 18:35:42 [Note]   - &#x27;0.0.0.0&#x27; resolves to &#x27;0.0.0.0&#x27;;</span><br><span class="line">210621 18:35:42 [Note] Server socket created on IP: &#x27;0.0.0.0&#x27;.</span><br><span class="line">210621 18:35:42 [Note] Event Scheduler: Loaded 0 events</span><br><span class="line">210621 18:35:42 [Note] /usr/sbin/mysqld: ready for connections.</span><br><span class="line">Version: &#x27;5.5.62&#x27;  socket: &#x27;/var/lib/mysql/mysql.sock&#x27;  port: 3306  MySQL Community Server (GPL)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="general-log（普通日志）"><a href="#general-log（普通日志）" class="headerlink" title="general log（普通日志）"></a>general log（普通日志）</h1><h2 id="定义-1"><a href="#定义-1" class="headerlink" title="定义"></a>定义</h2><p>general log 是 MySQL 的普通日志。<br>主要记录 MySQL 服务实例所有的操作，如：select，update，insert，delete等操作，无论操作是否成功执行都会记录。还记录 MySQL 客户端与 MySQL 服务端连接及断开的相关信息，无论连接成功还是失败。</p>
+<p><strong>注意：由于普通日志几乎记录了MySQL的所有操作，对于数据访问频繁的数据库服务器而言，<br>如果开启MySQL的普通查询日志将会大幅度的降低数据库的性能，因此建议关闭普通查询日志。<br>只有在特殊时期，如需要追踪某些特殊的查询日志，可以临时打开普通的查询日志。</strong></p>
+<hr>
+<h2 id="相关参数"><a href="#相关参数" class="headerlink" title="相关参数"></a>相关参数</h2><p>普通日志相关参数：</p>
+<ul>
+<li>general_log：是否开启普通日志</li>
+<li>general_log_file：普通日志文件的存放路径</li>
+</ul>
+<hr>
+<h2 id="开启普通日志"><a href="#开启普通日志" class="headerlink" title="开启普通日志"></a>开启普通日志</h2><p>查看普通日志的当前配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show variables like &#x27;%general_log%&#x27;;</span><br><span class="line">+------------------+-----------------------------------+</span><br><span class="line">| Variable_name    | Value                             |</span><br><span class="line">+------------------+-----------------------------------+</span><br><span class="line">| general_log      | OFF                               |</span><br><span class="line">| general_log_file | /var/lib/mysql/VM-16-4-centos.log |</span><br><span class="line">+------------------+-----------------------------------+</span><br><span class="line">2 rows in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;%general_log%&#x27;</span>; #查看普通日志是否开启</span><br><span class="line"><span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;%general_log_file%&#x27;</span>; #查看普通日志文件的存放路径</span><br><span class="line"></span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> general_log<span class="operator">=</span><span class="number">1</span>; #开启普通日志</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> general_log_file<span class="operator">=</span><span class="string">&#x27;/var/lib/mysql/general.log&#x27;</span>; #指定普通日志文件的存放路径</span><br></pre></td></tr></table></figure>
+
+<p>修改配置文件：(永久开启)<br>修改 my.cnf 文件，在 [mysqld] 下增加或修改参数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[mysqld]</span><br><span class="line">general_log=1</span><br><span class="line">general_log_file=/var/lib/mysql/general.log</span><br></pre></td></tr></table></figure>
+
+<p>当前通过修改配置文件指定普通日志配置，重启服务后查看普通日志。<br>结论：可以看到，普通日志记录了客户端登录，查询数据库，查询表的所有操作。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@VM-16-4-centos mysql]# cat /var/lib/mysql/general.log </span><br><span class="line">/usr/sbin/mysqld, Version: 5.5.62-log (MySQL Community Server (GPL)). started with:</span><br><span class="line">Tcp port: 3306  Unix socket: /var/lib/mysql/mysql.sock</span><br><span class="line">Time                 Id Command    Argument</span><br><span class="line">210621 21:51:45	    1 Connect	root@localhost on </span><br><span class="line">		    1 Connect	Access denied for user &#x27;root&#x27;@&#x27;localhost&#x27; (using password: NO)</span><br><span class="line">210621 21:52:01	    2 Connect	root@localhost on </span><br><span class="line">		    2 Query	select @@version_comment limit 1</span><br><span class="line">210621 21:52:51	    2 Query	SELECT DATABASE()</span><br><span class="line">		    2 Init DB	test</span><br><span class="line">210621 21:53:00	    2 Query	select * from a</span><br><span class="line">210621 21:53:03	    2 Query	select * from a</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="普通日志文件处理"><a href="#普通日志文件处理" class="headerlink" title="普通日志文件处理"></a>普通日志文件处理</h2><p>//TODO</p>
+<hr>
+<h1 id="slow-query-log（慢查询日志）"><a href="#slow-query-log（慢查询日志）" class="headerlink" title="slow query log（慢查询日志）"></a>slow query log（慢查询日志）</h1><h2 id="定义-2"><a href="#定义-2" class="headerlink" title="定义"></a>定义</h2><p>slow query log 是 MySQL 的慢查询日志。<br>主要记录 MySQL 中【响应时间超过阀值的sql语句】 或【没有使用索引】的查询语句。</p>
+<p><strong>注意：慢查询日志与普通查询日志不同，区别在于：慢查询日志只包含成功执行过的查询语句。</strong>  </p>
+<hr>
+<h2 id="相关参数-1"><a href="#相关参数-1" class="headerlink" title="相关参数"></a>相关参数</h2><p>以下是慢查询日志相关的参数：</p>
+<ul>
+<li>slow_query_log：慢查询日志是否开启</li>
+<li>slow_query_log_file：慢查询日志文件的存放路径，如果没有指定参数slow_query_log_file的话，系统默认会给一个缺省的文件host_name-slow.log。</li>
+<li>long_query_time：设置慢查询的时间阈值，默认阈值是10s。</li>
+<li>log_quries_not_using_indexes：是否将不适用索引的查询语句记录到慢查询日志中，无论查询速度有多快。</li>
+<li>slow_queries：记录当前慢查询sql条数</li>
+</ul>
+<hr>
+<h2 id="开启慢查询日志"><a href="#开启慢查询日志" class="headerlink" title="开启慢查询日志"></a>开启慢查询日志</h2><p>查看慢查询日志的当前配置.<br>默认情况下slow_query_log的值为OFF，表示慢查询日志是禁用的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show variables like &#x27;%slow_query_log%&#x27;;</span><br><span class="line">+---------------------+----------------------------------------+</span><br><span class="line">| Variable_name       | Value                                  |</span><br><span class="line">+---------------------+----------------------------------------+</span><br><span class="line">| slow_query_log      | OFF                                    |</span><br><span class="line">| slow_query_log_file | /var/lib/mysql/VM-16-4-centos-slow.log |</span><br><span class="line">+---------------------+----------------------------------------+</span><br><span class="line">2 rows in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;%slow_query_log%&#x27;</span>; #查看是否开启</span><br><span class="line"><span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;%slow_query_log_file%&#x27;</span>; #查看慢查询日志文件的存放路径</span><br><span class="line"></span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> slow_query_log<span class="operator">=</span><span class="number">1</span>; #设置开启慢查询日志</span><br></pre></td></tr></table></figure>
+
+<p>修改配置文件：(永久开启)<br>修改 my.cnf 文件，在 [mysqld] 下增加或修改参数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[mysqld]</span><br><span class="line">slow_query_log=1</span><br><span class="line">slow_query_log_file=/var/lib/mysql/atguigu-slow.log</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="什么-sql-会被记录到慢查询日志"><a href="#什么-sql-会被记录到慢查询日志" class="headerlink" title="什么 sql 会被记录到慢查询日志"></a>什么 sql 会被记录到慢查询日志</h2><p>问：开启慢查询日志后，什么 sql 会被记录到慢查询日志里面呢？<br>答：慢查询日志主要记录【响应时间超过阀值的sql语句】或【没有使用索引】的查询语句。</p>
+<h3 id="记录响应时间超过阀值的sql语句"><a href="#记录响应时间超过阀值的sql语句" class="headerlink" title="记录响应时间超过阀值的sql语句"></a>记录响应时间超过阀值的sql语句</h3><p>时间阈值是由 long_query_time 控制的.<br>long_query_time：设置慢查询的时间阈值，默认阈值是10s。可以使用命令修改，也可以在my.cnf参数里面修改。</p>
+<p>命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> variables <span class="keyword">LIKE</span> <span class="string">&#x27;long_query_time%&#x27;</span>; #查看long_query_time的值</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> long_query_time<span class="operator">=</span><span class="number">5</span>; #设置查询超过<span class="number">5</span>秒则算慢查询<span class="keyword">sql</span></span><br></pre></td></tr></table></figure>
+
+<p>修改配置文件：(永久开启)<br>修改 my.cnf 文件，在 [mysqld] 下增加或修改参数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[mysqld]</span><br><span class="line">long_query_time=5</span><br></pre></td></tr></table></figure>
+
+<h3 id="记录没有使用索引的查询语句"><a href="#记录没有使用索引的查询语句" class="headerlink" title="记录没有使用索引的查询语句"></a>记录没有使用索引的查询语句</h3><p>log_quries_not_using_indexes：是否将不使用索引的查询语句记录到慢查询日志中，无论查询速度有多快。</p>
+<p>命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> variables <span class="keyword">like</span> <span class="string">&#x27;%log_queries_not_using_indexes%&#x27;</span>; #查看值</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> log_queries_not_using_indexes<span class="operator">=</span><span class="number">1</span>; #设置开启记录没有使用索引的查询语句</span><br></pre></td></tr></table></figure>
+
+<p>修改配置文件：（永久开启）<br>修改 my.cnf 文件，在 [mysqld] 下增加或修改参数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">log_queries_not_using_indexes=1</span><br></pre></td></tr></table></figure>
+
+<h2 id="慢查询-sql-案例"><a href="#慢查询-sql-案例" class="headerlink" title="慢查询 sql 案例"></a>慢查询 sql 案例</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> slow_query_log<span class="operator">=</span><span class="number">1</span>; #设置开启慢查询日志</span><br><span class="line"><span class="keyword">set</span> <span class="keyword">global</span> long_query_time<span class="operator">=</span><span class="number">3</span>; #设置查询超过<span class="number">3</span>秒则算慢查询<span class="keyword">sql</span>（注意，这里是全局命令设置，需要重新连接才生效）</span><br><span class="line"></span><br><span class="line"><span class="keyword">select</span> sleep(<span class="number">4</span>) #模拟一次查询，查询耗时<span class="number">4</span>秒</span><br><span class="line"><span class="keyword">show</span> <span class="keyword">global</span> status <span class="keyword">like</span> <span class="string">&#x27;%slow_queries%&#x27;</span>; #查询当前慢查询<span class="keyword">sql</span>条数命令</span><br></pre></td></tr></table></figure>
+
+<p>去mysql的data目录下找到慢查询日志文件：<br>我没有去配置日志文件名，所以是一个默认的文件名：localhost-slow.log<br><img src="https://rong0624.gitee.io/images/MySQL/1624261484667.jpg" alt="慢查询日志图片"></p>
+<p>可以看到当前慢查询日志中会记录查询超过了阈值的sql，我们刚刚的select sleep(4)就在当中，而且可以明确的看到当前sql，当前查询时间，锁的时间，一共有多少数据。</p>
+<hr>
+<h2 id="日志查询分析器（mysqldumpslow）"><a href="#日志查询分析器（mysqldumpslow）" class="headerlink" title="日志查询分析器（mysqldumpslow）"></a>日志查询分析器（mysqldumpslow）</h2><p>日志查询分析器的体现：<br>在生产环境中，如果要手工分析日志，查找、分析SQL，显然是个体力活，MySQL提供了日志分析工具mysqldumpslow。<br><img src="https://rong0624.gitee.io/images/MySQL/%E6%97%A5%E5%BF%97%E6%9F%A5%E8%AF%A2%E5%88%86%E6%9E%90%E5%99%A8%E4%BD%BF%E7%94%A8.jpg" alt="日志查询分析器帮助信息图片"></p>
+<p>mysqldumpslow –help  查看mysqldumpslow的帮助信息</p>
+<ul>
+<li>s：表示按照何种方式排序</li>
+<li>c：访问次数</li>
+<li>l：锁定时间</li>
+<li>r：返回记录</li>
+<li>t：查询时间</li>
+<li>al：平均锁定时间</li>
+<li>ar：平均返回记录数</li>
+<li>at：平均查询时间</li>
+<li>t：即为返回前面多少条数据</li>
+<li>g：后边搭配一个正则匹配模式，大小写不敏感。</li>
+</ul>
+<p>分析器常用的方式：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#得到返回数据集最多的<span class="number">10</span>个<span class="keyword">SQL</span></span><br><span class="line">mysqldumpslow <span class="operator">-</span>s r <span class="operator">-</span>t <span class="number">10</span> <span class="operator">/</span>var<span class="operator">/</span>lib<span class="operator">/</span>mysql<span class="operator">/</span>localhost<span class="operator">-</span>slow.log</span><br><span class="line"></span><br><span class="line">#得到访问次数最多的<span class="number">10</span>个<span class="keyword">SQL</span></span><br><span class="line">mysqldumpslow <span class="operator">-</span>s c <span class="operator">-</span>t <span class="number">10</span> <span class="operator">/</span>var<span class="operator">/</span>lib<span class="operator">/</span>mysql<span class="operator">/</span>atguigu<span class="operator">-</span>slow.log</span><br><span class="line"></span><br><span class="line">#得到按照时间排序的前<span class="number">10</span>条里面含有左连接的查询<span class="keyword">sql</span></span><br><span class="line">mysqldumpslow <span class="operator">-</span>s t <span class="operator">-</span>t <span class="number">10</span> <span class="operator">-</span>g &quot;left join&quot; <span class="operator">/</span>var<span class="operator">/</span>lib<span class="operator">/</span>mysql<span class="operator">/</span>atguigu<span class="operator">-</span>slow.log</span><br><span class="line"></span><br><span class="line">#另外建议在使用这些命令时结合 <span class="operator">|</span> 和more 使用 ，否则有可能出现爆屏情况</span><br><span class="line">mysqldumpslow <span class="operator">-</span>s r <span class="operator">-</span>t <span class="number">10</span> <span class="operator">/</span>var<span class="operator">/</span>lib<span class="operator">/</span>mysql<span class="operator">/</span>atguigu<span class="operator">-</span>slow.log <span class="operator">|</span> more</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="bin-log（二进制日志）"><a href="#bin-log（二进制日志）" class="headerlink" title="bin log（二进制日志）"></a>bin log（二进制日志）</h1><h2 id="定义-3"><a href="#定义-3" class="headerlink" title="定义"></a>定义</h2><p>bin log 是 MySQL 的二进制文件，也叫归档日志，是Mysql Server层记录的。<br>主要记录 MySQL 数据库中的所有更新操作，如：use，insert，delete，update，create，alter，drop等操作。不改变数据的sql不会记录，比如 select 语句一般不会被记录，因为他们不会对数据产生任何改动。  </p>
+<p><strong>用一句更简介易懂的话概况就是：所有涉及数据变动的操作，都会记录到二进制日志文件中。</strong></p>
+<hr>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>1）数据恢复<br>做数据恢复。因为binlog详细的记录了所有修改数据的sql，在某个时间段因操作导致数据出现问题，或数据库党纪数据丢失，那么就可以通过binlog来恢复历史数据。<br>2）mysql主从复制<br>做数据备份和读写分离。在 master 端开启 bin log，master 把它的二进制日志传递给 slaves 来达到master-slave数据一致的目的。  </p>
+<hr>
+<h2 id="二进制日志文件常用操作命令"><a href="#二进制日志文件常用操作命令" class="headerlink" title="二进制日志文件常用操作命令"></a>二进制日志文件常用操作命令</h2><p>1）查看是否启动bin log 日志<br>show variables like ‘log_bin’;</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show variables like &#x27;log_bin&#x27;;</span><br><span class="line">+---------------+-------+</span><br><span class="line">| Variable_name | Value |</span><br><span class="line">+---------------+-------+</span><br><span class="line">| log_bin       | OFF   |</span><br><span class="line">+---------------+-------+</span><br><span class="line">1 row in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>2）查看binlog的目录<br>show global variables like “%log_bin%”;</p>
+<p>3）查看主库的日志文件，以及position信息<br>show master logs;</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show master logs;</span><br><span class="line">+------------------+-----------+</span><br><span class="line">| Log_name         | File_size |</span><br><span class="line">+------------------+-----------+</span><br><span class="line">| mysql-bin.000001 |       314 |</span><br><span class="line">| mysql-bin.000002 |       639 |</span><br><span class="line">+------------------+-----------+</span><br><span class="line">2 rows in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>4）查看master状态，即最后（最新）一个bin log日志的编号名称，及其最后一个操作事件pos结束点(Position)值。<br>show master status;</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show master status;</span><br><span class="line">+------------------+----------+--------------+------------------+</span><br><span class="line">| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB |</span><br><span class="line">+------------------+----------+--------------+------------------+</span><br><span class="line">| mysql-bin.000002 |      639 |              |                  |</span><br><span class="line">+------------------+----------+--------------+------------------+</span><br><span class="line">1 row in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>5）flush 刷新log日志，自此刻开始产生一个新编号的bin log日志文件;<br>flush logs;<br>注意：每当mysqld服务重启时，会自动执行此命令，刷新bin log日志；在mysqlddump备份数据时加-F选项也会刷新bin log日志；</p>
+<p>6）重置（清空）所有bin log日志;<br>reset master;</p>
+<hr>
+<h2 id="开启bin-log"><a href="#开启bin-log" class="headerlink" title="开启bin log"></a>开启bin log</h2><p>注意：mysql 8.0 版本之前，默认不开启，建议开启。</p>
+<p>查看二进制日志的当前配置：<br>可以看到，二进制日志默认是不开启的</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show variables like &#x27;log_bin&#x27;;</span><br><span class="line">+---------------+-------+</span><br><span class="line">| Variable_name | Value |</span><br><span class="line">+---------------+-------+</span><br><span class="line">| log_bin       | OFF   |</span><br><span class="line">+---------------+-------+</span><br><span class="line">1 row in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<p>修改配置文件：(永久开启)<br>修改 my.cnf 文件，在 [mysqld] 下增加或修改参数</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[mysqld] </span><br><span class="line">log-bin=mysql-bin</span><br><span class="line">server-id=001</span><br></pre></td></tr></table></figure>
+
+<p>修改配置文件后，重启服务配置生效<br>查看 bin log 日志文件<br><img src="https://rong0624.gitee.io/images/MySQL/1624350274231.jpg" alt="bin log 日志文件"></p>
+<hr>
+<h2 id="bin-log-的写入时机"><a href="#bin-log-的写入时机" class="headerlink" title="bin log 的写入时机"></a>bin log 的写入时机</h2><p>对支持事务的引擎如InnoDB而言，必须要提交了事务才会记录binlog。binlog 什么时候刷新到磁盘跟参数 sync_binlog 相关。</p>
+<p>sync_binlog参数讲解：<br>1）如果设置为0，则表示MySQL不控制binlog的刷新，由文件系统去控制它缓存的刷新；<br>2）如果设置为不为0的值，则表示每 sync_binlog 次事务，MySQL调用文件系统的刷新操作刷新binlog到磁盘中。<br>3）设为1是最安全的，在系统故障时最多丢失一个事务的更新，但是会对性能有所影响。</p>
+<p>如果 sync_binlog=0 或 sync_binlog大于1，当发生电源故障或操作系统崩溃时，可能有一部分已提交但其binlog未被同步到磁盘的事务会被丢失，恢复程序将无法恢复这部分事务。</p>
+<p>在MySQL 5.7.7之前，默认值 sync_binlog 是0，MySQL 5.7.7和更高版本使用默认值1，这是最安全的选择。一般情况下会设置为1或者0，牺牲一定的一致性来获取更好的性能。</p>
+<hr>
+<h2 id="bin-log-文件以及扩展"><a href="#bin-log-文件以及扩展" class="headerlink" title="bin log 文件以及扩展"></a>bin log 文件以及扩展</h2><p>二进制日志包含两种文件：  </p>
+<ul>
+<li>二进制日志索引文件（文件名后缀.index），用于记录索引的二进制文件  </li>
+<li>二进制日志文件（文件名后缀为.00000*）记录数据库所有的DDL和DML语句事件</li>
+</ul>
+<p>binlog是一个二进制文件集合，每个binlog文件以一个4字节的魔数开头，接着是一组Events:  </p>
+<ul>
+<li>魔数：0xfe62696e对应的是0xfebin； </li>
+<li>Event：每个Event包含header和data两个部分；header提供了Event的创建时间，哪个服务器等信息，data部分提供的是针对该* Event的具体信息，如具体数据的修改；</li>
+<li>第一个Event用于描述binlog文件的格式版本，这个格式就是event写入binlog文件的格式；</li>
+<li>其余的Event按照第一个Event的格式版本写入；</li>
+<li>最后一个Event用于说明下一个binlog文件；</li>
+<li>binlog的索引文件是一个文本文件，其中内容为当前的binlog文件列表</li>
+</ul>
+<p>当遇到以下3种情况时，MySQL会重新生成一个新的日志文件，文件序号递增：</p>
+<ul>
+<li>MySQL服务器停止或重启时</li>
+<li>使用 flush logs 命令；</li>
+<li>当 binlog 文件大小超过 max_binlog_size 变量的值时；</li>
+</ul>
+<p>max_binlog_size 的最小值是4096字节，最大值和默认值是 1GB (1073741824字节)。事务被写入到binlog的一个块中，所以它不会在几个二进制日志之间被拆分。因此，如果你有很大的事务，为了保证事务的完整性，不可能做切换日志的动作，只能将该事务的日志都记录到当前日志文件中，直到事务结束，你可能会看到binlog文件大于 max_binlog_size 的情况。</p>
+<p>注意：bin log与数据库文件在同目录中。  </p>
+<hr>
+<h2 id="bin-log-的日志格式"><a href="#bin-log-的日志格式" class="headerlink" title="bin log 的日志格式"></a>bin log 的日志格式</h2><p>记录在二进制日志中的事件的格式取决于二进制记录格式。支持三种格式类型：</p>
+<ul>
+<li>STATEMENT：基于SQL语句的复制（statement-based replication, SBR）</li>
+<li>ROW：基于行的复制（row-based replication, RBR）</li>
+<li>MIXED：混合模式复制（mixed-based replication, MBR）</li>
+</ul>
+<p><strong>注意：在 MySQL 5.7.7 之前，默认的格式是 STATEMENT，在 MySQL 5.7.7 及更高版本中，默认值是 ROW。日志格式通过 binlog-format 指定，如 binlog-format=STATEMENT、binlog-format=ROW、binlog-format=MIXED。</strong></p>
+<h3 id="Statement"><a href="#Statement" class="headerlink" title="Statement"></a>Statement</h3><p>每一条会修改数据的sql都会记录在binlog中</p>
+<p>优点：不需要记录每一行的变化，减少了binlog日志量，节约了IO, 提高了性能。</p>
+<p>缺点：由于记录的只是执行语句，为了这些语句能在slave上正确运行，因此还必须记录每条语句在执行的时候的一些相关信息，以保证所有语句能在slave得到和在master端执行的时候相同的结果。另外mysql的复制，像一些特定函数的功能，slave与master要保持一致会有很多相关问题。</p>
+<h3 id="Row"><a href="#Row" class="headerlink" title="Row"></a>Row</h3><p>5.1.5版本的MySQL才开始支持 row level 的复制,它不记录sql语句上下文相关信息，仅保存哪条记录被修改。</p>
+<p>优点： binlog中可以不记录执行的sql语句的上下文相关的信息，仅需要记录那一条记录被修改成什么了。所以row的日志内容会非常清楚的记录下每一行数据修改的细节。而且不会出现某些特定情况下的存储过程，或function，以及trigger的调用和触发无法被正确复制的问题.</p>
+<p>缺点:所有的执行的语句当记录到日志中的时候，都将以每行记录的修改来记录，这样可能会产生大量的日志内容。</p>
+<p>注：将二进制日志格式设置为ROW时，有些更改仍然使用基于语句的格式，包括所有DDL语句，例如CREATE TABLE， ALTER TABLE，或 DROP TABLE。</p>
+<h3 id="Mixed"><a href="#Mixed" class="headerlink" title="Mixed"></a>Mixed</h3><p>从5.1.8版本开始，MySQL提供了Mixed格式，实际上就是Statement与Row的结合。<br>在Mixed模式下，一般的语句修改使用statment格式保存binlog，如一些函数，statement无法完成主从复制的操作，则采用row格式保存binlog，MySQL会根据执行的每一条具体的sql语句来区分对待记录的日志形式，也就是在Statement和Row之间选择一种。</p>
+<h3 id="bin-log企业模式的选择"><a href="#bin-log企业模式的选择" class="headerlink" title="bin log企业模式的选择"></a>bin log企业模式的选择</h3><p>互联网公司使用MySQL的功能较少（不用存储过程、触发器、函数），选择默认的Statement level；<br>用到MySQL的特殊功能（存储过程、触发器、函数）则选择Mixed模式；<br>用到MySQL的特殊功能（存储过程、触发器、函数），又希望数据最大化一直则选择Row模式；</p>
+<h2 id="查看二进制日志文件"><a href="#查看二进制日志文件" class="headerlink" title="查看二进制日志文件"></a>查看二进制日志文件</h2><p>bin log是二进制文件，普通文件查看器cat、more、vim等都无法打开，必须使用自带的 mysqlbinlog 命令查看。  </p>
+<h3 id="mysqlbinlog-工具查看"><a href="#mysqlbinlog-工具查看" class="headerlink" title="mysqlbinlog 工具查看"></a>mysqlbinlog 工具查看</h3><p>mysqlbinlog 是 MySQL 中自带的工具，具体位置在 MySQL 的 bin 目录下。<br>在Mysql5.5以下版本使用mysqlbinlog命令时如果报错，就加上”–no-defaults”选项</p>
+<p>mysqlbinlog 使用语法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># mysqlbinlog 的执行格式</span></span><br><span class="line">mysqlbinlog [options] log_file ...</span><br><span class="line">-s                          以精简的方式显示日志内容</span><br><span class="line">-v                          以详细的方式显示日志内容</span><br><span class="line">-d=数据库名                  只显示指定数据库的日志内容</span><br><span class="line">-o=n                        忽略日志中前n行MySQL命令</span><br><span class="line">-r=file                     将指定内容写入指定文件</span><br><span class="line">--start-datetime  </span><br><span class="line">                            显示指定时间范围内的日志内容</span><br><span class="line">--stop-datetime         </span><br><span class="line"></span><br><span class="line">--start-position        </span><br><span class="line">                            显示指定位置间隔内的日志内容</span><br><span class="line">--stop-position     </span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看bin-log二进制文件（shell方式）</span></span><br><span class="line">mysqlbinlog -v --base64-output=decode-rows /var/lib/mysql/master.000003</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看bin-log二进制文件（带查询条件）</span></span><br><span class="line">mysqlbinlog -v --base64-output=decode-rows /var/lib/mysql/master.000003 \</span><br><span class="line">    --start-datetime=<span class="string">&quot;2019-03-01 00:00:00&quot;</span>  \</span><br><span class="line">    --stop-datetime=<span class="string">&quot;2019-03-10 00:00:00&quot;</span>   \</span><br><span class="line">    --start-position=<span class="string">&quot;5000&quot;</span>    \</span><br><span class="line">    --stop-position=<span class="string">&quot;20000&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>查看二进制日志文件：mysqlbinlog -v –base64-output=decode-rows mysql-bin.000002 </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># at 391</span><br><span class="line">#210622 17:06:40 server id 1  end_log_pos 501   Query   thread_id=2     exec_time=0     error_code=0</span><br><span class="line">SET TIMESTAMP=1624352800/*!*/;</span><br><span class="line">insert into admin_info values(1, &quot;admin&quot;, 100) #执行的sql</span><br><span class="line">/*!*/;</span><br></pre></td></tr></table></figure>
+<p>解释：  </p>
+<ul>
+<li>position: 位于文件中的位置，即第一行的（# at 391）,说明该事件记录从文件第391个字节开始</li>
+<li>timestamp: 事件发生的时间戳，即第二行的（#210622 17:06:40）</li>
+<li>server id: 服务器标识（1）</li>
+<li>end_log_pos 表示下一个事件开始的位置（即当前事件的结束位置+1）</li>
+<li>thread_id: 执行该事件的线程id （thread_id=2）</li>
+<li>exec_time: 事件执行的花费时间</li>
+<li>error_code: 错误码，0意味着没有发生错误</li>
+<li>type：事件类型Query</li>
+</ul>
+<h3 id="命令查看"><a href="#命令查看" class="headerlink" title="命令查看"></a>命令查看</h3><p>mysqlbinlog 查看取出 bin log 日志的全文内容比较多，不容易分辨查看到pos点信息<br>介绍一种更为方便的查询命令 show bin log events</p>
+<p>命令解析 show bin log events [IN ‘log_name’] [FROM pos] [LIMIT [offset,] row_count];<br>参数解析：<br>a、IN ‘log_name’:指定要查询的bin log文件名（不指定就是第一个bin log文件<br>b、FROM pos:指定从哪个pos起始点开始查起（不指定就是从整个文件首个pos点开始算）<br>c、LIMIT【offset】：偏移量(不指定就是0)<br>d、row_count :查询总条数（不指定就是所有行）  </p>
+<p>show bin log events查询：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; show bin log events in&#x27;mysql-bin.000002&#x27;;</span><br><span class="line">+------------------+-----+-------------+-----------+-------------+---------------------------------------------------------------------------------+</span><br><span class="line">| Log_name         | Pos | Event_type  | Server_id | End_log_pos | Info                                                                            |</span><br><span class="line">+------------------+-----+-------------+-----------+-------------+---------------------------------------------------------------------------------+</span><br><span class="line">| mysql-bin.000002 |   4 | Format_desc |         1 |         107 | Server ver: 5.5.62-log, bin log ver: 4                                           |</span><br><span class="line">| mysql-bin.000002 | 107 | Query       |         1 |         192 | create database admin                                                           |</span><br><span class="line">| mysql-bin.000002 | 192 | Query       |         1 |         322 | use `admin`; create table admin_info(id int(11), name varchar(50), age int(11)) |</span><br><span class="line">| mysql-bin.000002 | 322 | Query       |         1 |         391 | BEGIN                                                                           |</span><br><span class="line">| mysql-bin.000002 | 391 | Query       |         1 |         501 | use `admin`; insert into admin_info values(1, &quot;admin&quot;, 100)                     |</span><br><span class="line">| mysql-bin.000002 | 501 | Xid         |         1 |         528 | COMMIT /* xid=7 */                                                              |</span><br><span class="line">| mysql-bin.000002 | 528 | Query       |         1 |         639 | use `admin`; create table role(id int(11), name varchar(25))                    |</span><br><span class="line">+------------------+-----+-------------+-----------+-------------+---------------------------------------------------------------------------------+</span><br><span class="line">7 rows in set (0.00 sec)</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="利用二进制日志恢复数据"><a href="#利用二进制日志恢复数据" class="headerlink" title="利用二进制日志恢复数据"></a>利用二进制日志恢复数据</h2><p>// TODO</p>
+<hr>
+<h1 id="relay-log（中继日志）"><a href="#relay-log（中继日志）" class="headerlink" title="relay log（中继日志）"></a>relay log（中继日志）</h1><h2 id="定义-4"><a href="#定义-4" class="headerlink" title="定义"></a>定义</h2><p>// TODO</p>
+<h1 id="MySQL-事务日志（redolog-amp-undolog）"><a href="#MySQL-事务日志（redolog-amp-undolog）" class="headerlink" title="MySQL 事务日志（redolog &amp; undolog）"></a>MySQL 事务日志（redolog &amp; undolog）</h1><p>请看MySQL事务日志分析博客</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/MySQL/" rel="tag"># MySQL</a>
+              <a href="/blog/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2021/06/21/Redis/Redis-%E6%95%B0%E6%8D%AE%E8%BF%87%E6%9C%9F%E7%AD%96%E7%95%A5/" rel="prev" title="Redis-数据过期策略">
+      <i class="fa fa-chevron-left"></i> Redis-数据过期策略
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2021/06/23/Nginx/Nginx/" rel="next" title="Nginx">
+      Nginx <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#MySQL%E6%97%A5%E5%BF%97%E5%88%86%E7%B1%BB"><span class="nav-number">1.</span> <span class="nav-text">MySQL日志分类</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E5%88%86%E7%B1%BB"><span class="nav-number">1.1.</span> <span class="nav-text">日志分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E8%A6%81%E6%97%A5%E5%BF%97"><span class="nav-number">1.2.</span> <span class="nav-text">重要日志</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#error-log%EF%BC%88%E9%94%99%E8%AF%AF%E6%97%A5%E5%BF%97%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">error log（错误日志）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">2.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE%E9%94%99%E8%AF%AF%E6%97%A5%E5%BF%97"><span class="nav-number">2.2.</span> <span class="nav-text">设置错误日志</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#general-log%EF%BC%88%E6%99%AE%E9%80%9A%E6%97%A5%E5%BF%97%EF%BC%89"><span class="nav-number">3.</span> <span class="nav-text">general log（普通日志）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89-1"><span class="nav-number">3.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E5%8F%82%E6%95%B0"><span class="nav-number">3.2.</span> <span class="nav-text">相关参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%90%AF%E6%99%AE%E9%80%9A%E6%97%A5%E5%BF%97"><span class="nav-number">3.3.</span> <span class="nav-text">开启普通日志</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%99%AE%E9%80%9A%E6%97%A5%E5%BF%97%E6%96%87%E4%BB%B6%E5%A4%84%E7%90%86"><span class="nav-number">3.4.</span> <span class="nav-text">普通日志文件处理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#slow-query-log%EF%BC%88%E6%85%A2%E6%9F%A5%E8%AF%A2%E6%97%A5%E5%BF%97%EF%BC%89"><span class="nav-number">4.</span> <span class="nav-text">slow query log（慢查询日志）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89-2"><span class="nav-number">4.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E5%8F%82%E6%95%B0-1"><span class="nav-number">4.2.</span> <span class="nav-text">相关参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%90%AF%E6%85%A2%E6%9F%A5%E8%AF%A2%E6%97%A5%E5%BF%97"><span class="nav-number">4.3.</span> <span class="nav-text">开启慢查询日志</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88-sql-%E4%BC%9A%E8%A2%AB%E8%AE%B0%E5%BD%95%E5%88%B0%E6%85%A2%E6%9F%A5%E8%AF%A2%E6%97%A5%E5%BF%97"><span class="nav-number">4.4.</span> <span class="nav-text">什么 sql 会被记录到慢查询日志</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%B0%E5%BD%95%E5%93%8D%E5%BA%94%E6%97%B6%E9%97%B4%E8%B6%85%E8%BF%87%E9%98%80%E5%80%BC%E7%9A%84sql%E8%AF%AD%E5%8F%A5"><span class="nav-number">4.4.1.</span> <span class="nav-text">记录响应时间超过阀值的sql语句</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%B0%E5%BD%95%E6%B2%A1%E6%9C%89%E4%BD%BF%E7%94%A8%E7%B4%A2%E5%BC%95%E7%9A%84%E6%9F%A5%E8%AF%A2%E8%AF%AD%E5%8F%A5"><span class="nav-number">4.4.2.</span> <span class="nav-text">记录没有使用索引的查询语句</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%85%A2%E6%9F%A5%E8%AF%A2-sql-%E6%A1%88%E4%BE%8B"><span class="nav-number">4.5.</span> <span class="nav-text">慢查询 sql 案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E6%9F%A5%E8%AF%A2%E5%88%86%E6%9E%90%E5%99%A8%EF%BC%88mysqldumpslow%EF%BC%89"><span class="nav-number">4.6.</span> <span class="nav-text">日志查询分析器（mysqldumpslow）</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#bin-log%EF%BC%88%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%EF%BC%89"><span class="nav-number">5.</span> <span class="nav-text">bin log（二进制日志）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89-3"><span class="nav-number">5.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">5.2.</span> <span class="nav-text">应用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%E6%96%87%E4%BB%B6%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="nav-number">5.3.</span> <span class="nav-text">二进制日志文件常用操作命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%90%AFbin-log"><span class="nav-number">5.4.</span> <span class="nav-text">开启bin log</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bin-log-%E7%9A%84%E5%86%99%E5%85%A5%E6%97%B6%E6%9C%BA"><span class="nav-number">5.5.</span> <span class="nav-text">bin log 的写入时机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bin-log-%E6%96%87%E4%BB%B6%E4%BB%A5%E5%8F%8A%E6%89%A9%E5%B1%95"><span class="nav-number">5.6.</span> <span class="nav-text">bin log 文件以及扩展</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bin-log-%E7%9A%84%E6%97%A5%E5%BF%97%E6%A0%BC%E5%BC%8F"><span class="nav-number">5.7.</span> <span class="nav-text">bin log 的日志格式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Statement"><span class="nav-number">5.7.1.</span> <span class="nav-text">Statement</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Row"><span class="nav-number">5.7.2.</span> <span class="nav-text">Row</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Mixed"><span class="nav-number">5.7.3.</span> <span class="nav-text">Mixed</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bin-log%E4%BC%81%E4%B8%9A%E6%A8%A1%E5%BC%8F%E7%9A%84%E9%80%89%E6%8B%A9"><span class="nav-number">5.7.4.</span> <span class="nav-text">bin log企业模式的选择</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%E6%96%87%E4%BB%B6"><span class="nav-number">5.8.</span> <span class="nav-text">查看二进制日志文件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#mysqlbinlog-%E5%B7%A5%E5%85%B7%E6%9F%A5%E7%9C%8B"><span class="nav-number">5.8.1.</span> <span class="nav-text">mysqlbinlog 工具查看</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E6%9F%A5%E7%9C%8B"><span class="nav-number">5.8.2.</span> <span class="nav-text">命令查看</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A9%E7%94%A8%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%97%A5%E5%BF%97%E6%81%A2%E5%A4%8D%E6%95%B0%E6%8D%AE"><span class="nav-number">5.9.</span> <span class="nav-text">利用二进制日志恢复数据</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#relay-log%EF%BC%88%E4%B8%AD%E7%BB%A7%E6%97%A5%E5%BF%97%EF%BC%89"><span class="nav-number">6.</span> <span class="nav-text">relay log（中继日志）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89-4"><span class="nav-number">6.1.</span> <span class="nav-text">定义</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MySQL-%E4%BA%8B%E5%8A%A1%E6%97%A5%E5%BF%97%EF%BC%88redolog-amp-undolog%EF%BC%89"><span class="nav-number">7.</span> <span class="nav-text">MySQL 事务日志（redolog &amp; undolog）</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">神奇的荣荣</p>
+  <div class="site-description" itemprop="description">新知识要不断的总结记录成笔记，要多写，多画，能够清晰透彻的将知识讲给别人听，才是达到理解的层次。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/niubilityoyr" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;niubilityoyr" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">神奇的荣荣</span>
+</div>
+
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+-->
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

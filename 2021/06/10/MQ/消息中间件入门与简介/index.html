@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yourname.github.io","root":"/blog/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="什么是中间件什么是中间件我国企业从20世纪80年代开始就逐渐进行信息化建设，由于方法和体系的不成熟，以及企业业务的市场需求的不断变化，一个企业可能同时运行着多个不同的业务系统，这些系统可能基于不同的操作系统、不同的数据库、异构的网络环境。现在的问题是，如何把这些信息系统结合成一个有机地协同工作的整体，真正实现企业跨平台、分布式应用。中间件便是解决之道，它用自己的复杂换取了企业应用的简单。 中间件（">
+<meta property="og:type" content="article">
+<meta property="og:title" content="消息中间件入门与简介">
+<meta property="og:url" content="https://yourname.github.io/blog/2021/06/10/MQ/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%85%A5%E9%97%A8%E4%B8%8E%E7%AE%80%E4%BB%8B/index.html">
+<meta property="og:site_name" content="神奇的荣荣">
+<meta property="og:description" content="什么是中间件什么是中间件我国企业从20世纪80年代开始就逐渐进行信息化建设，由于方法和体系的不成熟，以及企业业务的市场需求的不断变化，一个企业可能同时运行着多个不同的业务系统，这些系统可能基于不同的操作系统、不同的数据库、异构的网络环境。现在的问题是，如何把这些信息系统结合成一个有机地协同工作的整体，真正实现企业跨平台、分布式应用。中间件便是解决之道，它用自己的复杂换取了企业应用的简单。 中间件（">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%89%B9%E7%82%B9.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E5%B8%B8%E8%A7%81%E4%B8%AD%E9%97%B4%E4%BB%B6.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/mq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%9B%BE%E8%A7%A31.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/mq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%9B%BE%E8%A7%A32.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E5%B9%B6%E8%A1%8C%E6%89%A7%E8%A1%8C.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E5%BC%82%E6%AD%A5%E6%89%A7%E8%A1%8C.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E7%B3%BB%E7%BB%9F%E8%80%A6%E5%90%88.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E7%B3%BB%E7%BB%9F%E8%80%A6%E5%90%882.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E7%B3%BB%E7%BB%9F%E8%A7%A3%E8%80%A6.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E6%B5%81%E9%87%8F%E5%89%8A%E5%B3%B01.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E6%B5%81%E9%87%8F%E5%89%8A%E5%B3%B02.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E6%B5%81%E9%87%8F%E5%89%8A%E5%B3%B03.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/mq%E5%8D%8F%E8%AE%AE.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E6%B6%88%E6%81%AF%E6%8C%81%E4%B9%85%E5%8C%96.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E6%B6%88%E6%81%AF%E5%88%86%E5%8F%911.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E6%B6%88%E6%81%AF%E5%88%86%E5%8F%912.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E6%B6%88%E6%81%AF%E5%88%86%E5%8F%91%E7%AD%96%E7%95%A5.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E9%9B%86%E7%BE%A4%E6%A8%A1%E5%BC%8F%E4%B8%80.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/%E9%9B%86%E7%BE%A4%E6%A8%A1%E5%BC%8F%E4%BA%8C.png">
+<meta property="article:published_time" content="2021-06-09T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-01T07:05:29.992Z">
+<meta property="article:author" content="神奇的荣荣">
+<meta property="article:tag" content="MQ">
+<meta property="article:tag" content="中间件">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://rong0624.gitee.io/images/MQ/%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%89%B9%E7%82%B9.png">
+
+<link rel="canonical" href="https://yourname.github.io/blog/2021/06/10/MQ/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%85%A5%E9%97%A8%E4%B8%8E%E7%AE%80%E4%BB%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>消息中间件入门与简介 | 神奇的荣荣</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">神奇的荣荣</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">神奇的荣荣の博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yourname.github.io/blog/2021/06/10/MQ/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%85%A5%E9%97%A8%E4%B8%8E%E7%AE%80%E4%BB%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="神奇的荣荣">
+      <meta itemprop="description" content="新知识要不断的总结记录成笔记，要多写，多画，能够清晰透彻的将知识讲给别人听，才是达到理解的层次。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="神奇的荣荣">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          消息中间件入门与简介
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-06-10 00:00:00" itemprop="dateCreated datePublished" datetime="2021-06-10T00:00:00+08:00">2021-06-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-09-01 15:05:29" itemprop="dateModified" datetime="2021-09-01T15:05:29+08:00">2021-09-01</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/MQ/" itemprop="url" rel="index"><span itemprop="name">MQ</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="什么是中间件"><a href="#什么是中间件" class="headerlink" title="什么是中间件"></a>什么是中间件</h1><h2 id="什么是中间件-1"><a href="#什么是中间件-1" class="headerlink" title="什么是中间件"></a>什么是中间件</h2><p>我国企业从20世纪80年代开始就逐渐进行信息化建设，由于方法和体系的不成熟，以及企业业务的市场需求的不断变化，一个企业可能同时运行着多个不同的业务系统，这些系统可能基于不同的操作系统、不同的数据库、异构的网络环境。现在的问题是，如何把这些信息系统结合成一个有机地协同工作的整体，真正实现企业跨平台、分布式应用。中间件便是解决之道，它用自己的复杂换取了企业应用的简单。</p>
+<p>中间件（Middleware）是处于操作系统和应用程序之间的软件，也有人认为它应该属于操作系统中的一部分。人们在使用中间件时，往往是一组中间件集成在一起，构成一个平台（包括开发平台和运行平台），但在这组中间件中必须要有一个通信中间件，即中间件+平台+通信，这个定义也限定了只有用于分布式系统中才能称为中间件，同时还可以把它与支撑软件和使用软件区分开来</p>
+<hr>
+<span id="more"></span>
+
+<h2 id="中间件特点"><a href="#中间件特点" class="headerlink" title="中间件特点"></a>中间件特点</h2><p>为解决分布异构问题，人们提出了中间件（middleware)的概念。中间件是位于平台（硬件和操作系统）和应用之间的通用服务，如下图所示，这些服务具有标准的程序接口和协议。针对不同的操作系统和硬件平台，它们可以有符合接口的协议规范的多种实现。</p>
+<p><img src="https://rong0624.gitee.io/images/MQ/%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%89%B9%E7%82%B9.png" alt="中间件特点"></p>
+<p>也很难给中间件一个严格的定义，但中间件应具有如下的一些特点：<br>（1）满足大量应用的需要<br>（2）运行于多种硬件和 OS平台<br>（3）支持分布计算，提供跨网络、硬件和 OS平台的透明性的应用或服务的交互<br>（4）支持标准的协议<br>（5）支持标准的接口</p>
+<p>由于标准接口对于可移植性和标准协议对于互操作性的重要性，中间件已成为许多标准化工作的主要部分。对于应用软件开发，中间件远比操作系统和网络服务更为重要，中间件提供的程序接口定义了一个相对稳定的高层应用环境，不管底层的计算机硬件和系统软件怎样更新换代，只要将中间件升级更新，并保持中间件对外的接口定义不变，应用软件几乎不需任何修改，从而保护了企业在应用软件开发和维护中的重大投资。</p>
+<p>简单说：中间件有个很大的特点，是脱离于具体设计目标，而具备提供普遍独立功能需求的模块。这使得中间件一定是可替换的。如果一个系统设计中，中间件时不可替代的，不是架构、框架设计有问题，那么就是这个中间件，在别处可能是个中间件，在这个系统内是引擎。</p>
+<hr>
+<h2 id="常见中间件"><a href="#常见中间件" class="headerlink" title="常见中间件"></a>常见中间件</h2><p><img src="https://rong0624.gitee.io/images/MQ/%E5%B8%B8%E8%A7%81%E4%B8%AD%E9%97%B4%E4%BB%B6.png" alt="常见中间件"></p>
+<hr>
+<h2 id="学习中间件的方式和技巧"><a href="#学习中间件的方式和技巧" class="headerlink" title="学习中间件的方式和技巧"></a>学习中间件的方式和技巧</h2><p>1）理解中间件在项目架构中的作用，以及各中间件的底层实现<br>2）可以使用一些类比的生活概念去理解中间件<br>3）使用一些流程图或者脑图的方式去梳理各个中间件在架构中的作用<br>4）尝试用 java技术去实现中间件的原理<br>5）静下来去思考中间件在项目中设计的和使用的原因<br>6）如果找到对应的代替总结方案<br>7）尝试编写博文总结类同中间件技术的对比和使用场景<br>8）学会查看中间件的源码以及开源项目和博文</p>
+<hr>
+<h1 id="什么是消息中间件"><a href="#什么是消息中间件" class="headerlink" title="什么是消息中间件"></a>什么是消息中间件</h1><h2 id="什么是消息中间件-1"><a href="#什么是消息中间件-1" class="headerlink" title="什么是消息中间件"></a>什么是消息中间件</h2><p>消息中间件：<br>是利用高效可靠的消息传递机制进行异步的数据传输，并基于数据通信进行分布式系统的集成。通过提供消息队列模型和消息传递机制，可以在分布式环境下扩展进程间的通信。</p>
+<hr>
+<h2 id="为什么需要使用消息中间件"><a href="#为什么需要使用消息中间件" class="headerlink" title="为什么需要使用消息中间件"></a>为什么需要使用消息中间件</h2><p>具体地说，中间件屏蔽了底层操作系统的复杂性，使程序开发人员面对一个简单而统一的开发环境，减少程序设计的复杂性，将注意力集中在自己的业务上，不必再为程序在不同系统软件上的移植而重复工作，从而大大减少了技术上的负担，中间件带给应用系统的，不只是开发的简便、开发周期的缩短，也减少了系统的维护、运行和管理的工作量，还减少了计算机总体费用的投入。</p>
+<hr>
+<h2 id="消息中间件功能与组成"><a href="#消息中间件功能与组成" class="headerlink" title="消息中间件功能与组成"></a>消息中间件功能与组成</h2><h3 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h3><p>消息中间件：<br>是一种接受数据、接受请求、存储数据、发送数据等功能的技术服务。</p>
+<p>MQ消息队列：负责数据的接受，存储和传递，所以性能要高于普通服务和技术。<br><img src="https://rong0624.gitee.io/images/MQ/mq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%9B%BE%E8%A7%A31.png" alt="常见中间件"></p>
+<p>谁来生产消息，存储消息和消费消息呢？<br>生产者生产消息，MQ存储消息，消费者消费消息<br><img src="https://rong0624.gitee.io/images/MQ/mq%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%9B%BE%E8%A7%A32.png" alt="常见中间件"></p>
+<h3 id="核心组成部分"><a href="#核心组成部分" class="headerlink" title="核心组成部分"></a>核心组成部分</h3><p>消息中间件的核心组成部分：<br>消息的协议<br>消息的持久化机制<br>消息的分发策略<br>消息的高可用<br>高可靠消息的容错机制</p>
+<h2 id="消息中间件应用场景"><a href="#消息中间件应用场景" class="headerlink" title="消息中间件应用场景"></a>消息中间件应用场景</h2><p>参考：<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/3fed7e963a2d">https://www.jianshu.com/p/3fed7e963a2d</a></p>
+<hr>
+<h3 id="异步通信"><a href="#异步通信" class="headerlink" title="异步通信"></a>异步通信</h3><p>异步通信：（异步处理）<br>当有些业务不想也不需要立即处理，消息队列提供了异步处理机制，允许用户把一个消息放入队列，但并不立即处理它，然后在需要的时候再去处理它们。</p>
+<p>案例讲解：<br>假设有一个系统调用链路为A调用B耗时20ms，B调用C耗时20ms，而C调用D需要2s，这样下来整个调用需要耗时2040ms。但实际上A调用B，B调用C只需要40ms，而D系统的引入直接导致系统性能下降约50倍。此时我们应该考虑将D系统的调用抽离出来，做一个异步调用。<br><img src="https://rong0624.gitee.io/images/MQ/%E5%B9%B6%E8%A1%8C%E6%89%A7%E8%A1%8C.png" alt="常见中间件"></p>
+<p>生活中有一个很形象的例子。我们点一杯奶茶，下单、付款、通知商家制作都很快，然而到匹配外卖小哥配送这个过程很慢。作为用户来说，匹配外卖小哥这个过程延迟一些时间是可以接受的，只要我能快速下单成功，并且在一定时间范围内安排快递小哥送货即可。</p>
+<p>按照上面的思路，系统A到系统B再到系统C就直接结束了，然后系统C再将消息发送到消息中间件中，系统D从消息中间件里取消息进行消费，这样子我们系统的性能就提高了接近50倍。<br>过程如下图所示：<br><img src="https://rong0624.gitee.io/images/MQ/%E5%BC%82%E6%AD%A5%E6%89%A7%E8%A1%8C.png" alt="常见中间件"></p>
+<h3 id="系统解耦"><a href="#系统解耦" class="headerlink" title="系统解耦"></a>系统解耦</h3><p>系统解耦：降低系统之间的耦合度。</p>
+<p>案例讲解：<br>首先假设有一个核心系统A，其能产生核心数据供下游服务（系统B和系统C）使用。此时最易想到的办法就是A直接把数据发送给B和C，流程如下：<br><img src="https://rong0624.gitee.io/images/MQ/%E7%B3%BB%E7%BB%9F%E8%80%A6%E5%90%88.png" alt="常见中间件"></p>
+<p>那么问题来了，此时假设又有D、E、F、G等多个系统也需要使用核心数据，此时流程图如下：<br><img src="https://rong0624.gitee.io/images/MQ/%E7%B3%BB%E7%BB%9F%E8%80%A6%E5%90%882.png" alt="常见中间件"></p>
+<p>我们可以想象一下，假设有上百个系统都需要系统A的核心数据，此时负责系统A的工程师将是崩溃的，一旦有系统加入，A系统就需要修改代码，将数据发送到新加入的系统。反之，如果有系统不再需要A发送数据，那么A系统又得修改代码不再向其发送数据。这样的架构设计耦合度太高了，我们就可以引入消息中间件来实现系统之间的解耦。即核心系统A生产核心数据，然后将核心数据发送到消息中间件，下游消费系统根据自身需求从中间件里获取消息进行消费，当不再需要数据时就不取消息进即可，这样系统之间耦合度就大大降低了。具体流程图如下：<br><img src="https://rong0624.gitee.io/images/MQ/%E7%B3%BB%E7%BB%9F%E8%A7%A3%E8%80%A6.png" alt="常见中间件"></p>
+<h3 id="流量削峰"><a href="#流量削峰" class="headerlink" title="流量削峰"></a>流量削峰</h3><p>流量消峰：<br>针对某一时间段的大量用户访问产生的大量流量，进行延缓，层层过滤，遵从 “最后落地到数据库的请求数要尽量少”的原则.</p>
+<p>案例讲解：<br>假设有一个系统，正常时间也就每秒几百个请求，部署在一个8核16G的机器上，运行起来轻松加愉快。然而突然由于搞一个活动，高峰期请求数达到了几千，出现了瞬时流量高峰，此时最易想到的是加机器，部署个10台机器，也能扛住此时的高并发。<br><img src="https://rong0624.gitee.io/images/MQ/%E6%B5%81%E9%87%8F%E5%89%8A%E5%B3%B01.png" alt="常见中间件"></p>
+<p>那么问题来了，瞬时流量每天也就那么几十分钟，过后就是正常的每秒几百请求，我们如果部署10台机器，那么平均下来没台机器的请求数也就每秒几十次，这样是不是有点太浪费资源了呢？大部分时候，每秒几百请求，一台机器就能够扛住了，但是为了抗那每天瞬时的高峰，硬是部署了10台机器，每天就那几十分钟有用，别的时候都是浪费资源的。<br><img src="https://rong0624.gitee.io/images/MQ/%E6%B5%81%E9%87%8F%E5%89%8A%E5%B3%B02.png" alt="常见中间件"></p>
+<p>但是如果仅仅部署一台机器，瞬间高峰就会击垮系统，因为单台机器是不能扛住每秒几千次请求的。这时我们就可以考虑引入消息中间件，进行流量削峰。我们可以部署一层消息队列在机器前面，平时正常的每秒几百次请求，机器就正常的消费消息即可，一旦流量高峰到达时，大量消息会堆积在消息队列里面，机器只需要按照自己的最大负荷从消息队列里面消费，等流量高峰过了，慢慢地队列里面的消息也消费完毕了。此时达到了一个削峰填谷的作用。具体如图所示：<br><img src="https://rong0624.gitee.io/images/MQ/%E6%B5%81%E9%87%8F%E5%89%8A%E5%B3%B03.png" alt="常见中间件"></p>
+<h2 id="常见的消息中间件"><a href="#常见的消息中间件" class="headerlink" title="常见的消息中间件"></a>常见的消息中间件</h2><p>ActiveMQ，RabbitMQ，Kafka，RocketMQ</p>
+<hr>
+<h1 id="消息队列协议"><a href="#消息队列协议" class="headerlink" title="消息队列协议"></a>消息队列协议</h1><h2 id="什么是协议"><a href="#什么是协议" class="headerlink" title="什么是协议"></a>什么是协议</h2><p><img src="https://rong0624.gitee.io/images/MQ/mq%E5%8D%8F%E8%AE%AE.png" alt="常见中间件"></p>
+<p>所谓协议是指：<br>1）计算机底层操作系统和应用程序通讯时共同遵守的一组约定，只有遵循共同的约定和规范，系统和底层操作系统之间才能相互交流<br>2）和一般的网络应用程序的不同它主要负责数据的接受和传递，所以性能比较的高<br>3）协议对数据格式和计算机之间交换数据都必须严格遵守规范</p>
+<hr>
+<h2 id="网络协议的三要素"><a href="#网络协议的三要素" class="headerlink" title="网络协议的三要素"></a>网络协议的三要素</h2><p>1）语法：语法是用户数据与控制信息的结构与格式，以及数据出现的顺序<br>2）语义：语义是解释控制信息每个部分的意义，它规定了需要发出何种控制信息，以及完成的动作与做出什么样的响应<br>3）时序：时序是对事件发生顺序的详细说明</p>
+<p>比如我 MQ发送一个信息，是以什么数据格式发送到队列中，然后每个部分的含义是什么，发送完毕以后的执行的动作，以及消费者消费消息的动作，消费完毕的相应结构和反馈是什么，然后按照对应的执行顺序进行处理。如果你还是不理解：大家每天都在接触的http请求协议：<br>1）语法：http规定了请求报文和响应报文的格式<br>2）语义：客户端主动发起请求称之为请求（这是一种定义，同时你发起的是 post/get请求）<br>3）时序：一个请求对应一个响应（一定先有请求在有响应，这个是时序）</p>
+<hr>
+<h2 id="常见的消息中间件协议"><a href="#常见的消息中间件协议" class="headerlink" title="常见的消息中间件协议"></a>常见的消息中间件协议</h2><p>消息中间件采用的不是 http协议。<br>常见的消息中间件协议有：AMQP、Kafka，OpenMessage，OpenWire，MQTT协议</p>
+<hr>
+<h3 id="AMQP协议"><a href="#AMQP协议" class="headerlink" title="AMQP协议"></a>AMQP协议</h3><p>AMQP：（全称：Advanced Message Queuing Protocol）是高级消息队列协议。由摩根大通集团联合其他公司共同设计。是一个提供统一消息服务的应用层标准高级消息队列协议，是应用层协议的一个开放标准，为面向消息的中间件设计。基于此协议的客户端与消息中间件可传递消息，并不受客户端/中间件不同产品，不同的开发语言等条件的限制。</p>
+<p>特性：<br>1）分布式事务支持<br>2）消息的持久化支持<br>3）高性能和高可靠的消息处理优势</p>
+<p>支持MQ：RabbitMQ</p>
+<h3 id="MQTT协议"><a href="#MQTT协议" class="headerlink" title="MQTT协议"></a>MQTT协议</h3><p>MQTT：（Message Queueing Telemetry Transport）消息队列是 IBM开放的及时通讯协议，物联网系统架构中的重要组成部分。</p>
+<p>特点：<br>1）轻量<br>2）结构简单<br>3）传输快，不支持事务<br>4）没有持久化设计</p>
+<p>支持MQ：RabbitMQ</p>
+<h3 id="Kafka协议"><a href="#Kafka协议" class="headerlink" title="Kafka协议"></a>Kafka协议</h3><p>Kafka协议：是基于TCP/IP的二进制协议。消息内部是 通过长度来分割，由一些基本数据类型组成。</p>
+<p>特点：<br>1）结构简单<br>2）解析速度快<br>3）无事务支持<br>4）有持久化设计</p>
+<p>代表MQ：Kafka</p>
+<h3 id="OpenMessage协议"><a href="#OpenMessage协议" class="headerlink" title="OpenMessage协议"></a>OpenMessage协议</h3><p>OpenMessage协议：是近几年由阿里、雅虎和滴滴出行、Stremalio等公司共同参与创立的分布式信息中间件、流处理等领域的应用开发标准。</p>
+<p>特点：<br>1）结构简单<br>2）解析速度快<br>3）支持事务和持久化设计</p>
+<p>支持MQ：RocketMQ</p>
+<h2 id="为什么消息中间件不使用-http协议"><a href="#为什么消息中间件不使用-http协议" class="headerlink" title="为什么消息中间件不使用 http协议"></a>为什么消息中间件不使用 http协议</h2><p>为什么消息中间件不使用 http协议？<br>1）因为 http请求报文头和响应报文头是比较复杂的，包含了Cookie，数据的加密解密，窗台吗，响应码等附加的功能，但是对于一个消息而言，我们并不需要这么复杂，也没有这个必要性，它其实就是负责数据传递，存储，分发就行，一定要追求的是高性能。尽量简洁，快速<br>2）大部分情况下 http大部分都是短链接，在实际的交互过程中，一个请求到响应都很有可能会中断，中断以后就不会执行持久化，就会造成请求的丢失。这样就不利于消息中间件的业务场景，因为消息中间件可能是一个长期的获取信息的过程，出现问题和故障要对数据或消息执行持久化等，目的是为了保证消息和数据的高可靠和稳健的运行。</p>
+<hr>
+<h1 id="消息队列持久化"><a href="#消息队列持久化" class="headerlink" title="消息队列持久化"></a>消息队列持久化</h1><h2 id="持久化"><a href="#持久化" class="headerlink" title="持久化"></a>持久化</h2><p>简单来说就是将数据存入磁盘，而不是存在内存中随服务器重启断开而消失，使数据能够永久保存。<br><img src="https://rong0624.gitee.io/images/MQ/%E6%B6%88%E6%81%AF%E6%8C%81%E4%B9%85%E5%8C%96.png" alt="消息持久化图片"></p>
+<hr>
+<h2 id="常见MQ的持久化方式"><a href="#常见MQ的持久化方式" class="headerlink" title="常见MQ的持久化方式"></a>常见MQ的持久化方式</h2><p>ActiveMQ：支持文件存储，支持数据库</p>
+<p>RabbitMQ &amp; Kafka &amp; RocketMQ：支持文件存储</p>
+<hr>
+<h1 id="消息的分发策略"><a href="#消息的分发策略" class="headerlink" title="消息的分发策略"></a>消息的分发策略</h1><h2 id="场景分析"><a href="#场景分析" class="headerlink" title="场景分析"></a>场景分析</h2><p>场景分析一：<br><img src="https://rong0624.gitee.io/images/MQ/%E6%B6%88%E6%81%AF%E5%88%86%E5%8F%911.png" alt="消息分发1"><br>比如我在 APP上下了一个订单，我们的系统和服务很多，我们如何得知这个消息被哪个系统或者哪些服务器或者系统进行消费，那这个时候就需要一个分发的策略。这就需要消费策略。或者称之为消费的方法论。</p>
+<p>场景分析二：<br><img src="https://rong0624.gitee.io/images/MQ/%E6%B6%88%E6%81%AF%E5%88%86%E5%8F%912.png" alt="消息分发2"><br>在发送消息的过程中可能会出现异常，或者网络的抖动，故障等等因为造成消息的无法消费，比如用户在下订单，消费 MQ接受，订单系统出现故障，导致用户支付失败，那么这个时候就需要消息中间件就必须支持消息重试机制策略。也就是支持：出现问题和故障的情况下，消息不丢失还可以进行重发消息策略的机制。</p>
+<h2 id="消息的分发策略-1"><a href="#消息的分发策略-1" class="headerlink" title="消息的分发策略"></a>消息的分发策略</h2><p>MQ消息队列有如下几个角色<br>1）生产者<br>2）存储消息<br>3）消费者</p>
+<p>那么生产者生成消息以后，MQ进行存储，消费者是如何获取消息的呢？一般获取数据的方式无外乎推（push）或者拉（pull）两种方式，典型的 git就有推拉机制，我们发送的 http请求就是一种典型的拉取数据库数据返回的过程。而消息队列 MQ是一种推送的过程，而这些推机制会使用到很多的业务场景也有很多对应推机制策略。</p>
+<p><img src="https://rong0624.gitee.io/images/MQ/%E6%B6%88%E6%81%AF%E5%88%86%E5%8F%91%E7%AD%96%E7%95%A5.png" alt="消息分发策略">  </p>
+<hr>
+<h1 id="消息队列高可用和高可靠"><a href="#消息队列高可用和高可靠" class="headerlink" title="消息队列高可用和高可靠"></a>消息队列高可用和高可靠</h1><h2 id="什么是高可用机制"><a href="#什么是高可用机制" class="headerlink" title="什么是高可用机制"></a>什么是高可用机制</h2><p>所谓高可用：是指产品在规定的条件和规定的时刻或时间内处于可执行规定功能状态的能力<br>当业务量增加时，请求也过大，一台消息中间件服务器的会触及硬件（CPU，内存，磁盘）的极限，一台消息服务器你已经无法满足业务的需求，所以消息中间件必须支持集群部署，来达到高可用的目的。</p>
+<h3 id="集群模式一"><a href="#集群模式一" class="headerlink" title="集群模式一"></a>集群模式一</h3><p>Master-slave主从同步部署方式<br><img src="https://rong0624.gitee.io/images/MQ/%E9%9B%86%E7%BE%A4%E6%A8%A1%E5%BC%8F%E4%B8%80.png" alt="集群模式1"><br>解释：这种模式写入消息同样在 Master主节点上，但是主节点会同步数据到 slave节点形成副本，和 zookeeper或者 redis主从机制很雷同。这样可以达到负载均衡的效果，如果消费者有多个这样就可以去不同的节点进行消费，消息的拷贝和同步会占用很大的带宽和网络资源。</p>
+<h3 id="集群模式二"><a href="#集群模式二" class="headerlink" title="集群模式二"></a>集群模式二</h3><p>Master-slave与 Broker-cluster组合的方案<br><img src="https://rong0624.gitee.io/images/MQ/%E9%9B%86%E7%BE%A4%E6%A8%A1%E5%BC%8F%E4%BA%8C.png" alt="集群模式1"><br>解释：如果你插入的数据是 broker-1中国，元数据信息会存储数据的相关描述和记录存放的位置（队列）。它会对描述信息也就是元数据信息进行同步，如果消费者在 broker-2中进行消费，发现自己节点没有对应的信息，可以从对应的元数据信息中去查询，然后返回对应的消息信息，场景：比如买火车票或者黄牛买演唱会门票，比如第一个黄牛有顾客说要买的演唱会门票，但是没有但是他回去联系其他的黄牛询问，如果有就返回。</p>
+<p><strong>注意：实现多主多从的热备机制来完成消息的高可用以及数据的热备机制，在生产规模达到一定的阶段的时候，这种使用的频率比较高。</strong></p>
+<h2 id="什么是高可靠机制"><a href="#什么是高可靠机制" class="headerlink" title="什么是高可靠机制"></a>什么是高可靠机制</h2><p>所谓高可靠是指：<br>系统可以无故障低持续运行，比如一个系统突然崩溃，报错，异常等等并不影响线上业务的正常运行，出错的几率极低，就称之为：高可靠。</p>
+<p>如何保证中间件消息的可靠性呢，可以从两个方面考虑：<br>1）消息的传输：通过协议来保证系统间数据解析的正确性<br>2）消息的存储区可靠：通过持久化来保证消息的可靠性</p>
+<p>注意：在高并发的业务场景中，如果不能保证系统的高可靠，那造成的隐患和损失是非常严重的。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/MQ/" rel="tag"># MQ</a>
+              <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag"># 中间件</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2021/05/01/Markdown/Markdown%E8%AF%AD%E6%B3%95/" rel="prev" title="Markdown语法">
+      <i class="fa fa-chevron-left"></i> Markdown语法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2021/06/15/MQ/JMS/" rel="next" title="JMS">
+      JMS <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="nav-number">1.</span> <span class="nav-text">什么是中间件</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%AD%E9%97%B4%E4%BB%B6-1"><span class="nav-number">1.1.</span> <span class="nav-text">什么是中间件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%89%B9%E7%82%B9"><span class="nav-number">1.2.</span> <span class="nav-text">中间件特点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="nav-number">1.3.</span> <span class="nav-text">常见中间件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AD%A6%E4%B9%A0%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%9A%84%E6%96%B9%E5%BC%8F%E5%92%8C%E6%8A%80%E5%B7%A7"><span class="nav-number">1.4.</span> <span class="nav-text">学习中间件的方式和技巧</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="nav-number">2.</span> <span class="nav-text">什么是消息中间件</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6-1"><span class="nav-number">2.1.</span> <span class="nav-text">什么是消息中间件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="nav-number">2.2.</span> <span class="nav-text">为什么需要使用消息中间件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%8A%9F%E8%83%BD%E4%B8%8E%E7%BB%84%E6%88%90"><span class="nav-number">2.3.</span> <span class="nav-text">消息中间件功能与组成</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%9F%E8%83%BD"><span class="nav-number">2.3.1.</span> <span class="nav-text">功能</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%84%E6%88%90%E9%83%A8%E5%88%86"><span class="nav-number">2.3.2.</span> <span class="nav-text">核心组成部分</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">2.4.</span> <span class="nav-text">消息中间件应用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5%E9%80%9A%E4%BF%A1"><span class="nav-number">2.4.1.</span> <span class="nav-text">异步通信</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E8%A7%A3%E8%80%A6"><span class="nav-number">2.4.2.</span> <span class="nav-text">系统解耦</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%81%E9%87%8F%E5%89%8A%E5%B3%B0"><span class="nav-number">2.4.3.</span> <span class="nav-text">流量削峰</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6"><span class="nav-number">2.5.</span> <span class="nav-text">常见的消息中间件</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.</span> <span class="nav-text">消息队列协议</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.1.</span> <span class="nav-text">什么是协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%89%E8%A6%81%E7%B4%A0"><span class="nav-number">3.2.</span> <span class="nav-text">网络协议的三要素</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%84%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.3.</span> <span class="nav-text">常见的消息中间件协议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#AMQP%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.3.1.</span> <span class="nav-text">AMQP协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MQTT%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.3.2.</span> <span class="nav-text">MQTT协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Kafka%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.3.3.</span> <span class="nav-text">Kafka协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OpenMessage%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.3.4.</span> <span class="nav-text">OpenMessage协议</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E4%B8%8D%E4%BD%BF%E7%94%A8-http%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.4.</span> <span class="nav-text">为什么消息中间件不使用 http协议</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E6%8C%81%E4%B9%85%E5%8C%96"><span class="nav-number">4.</span> <span class="nav-text">消息队列持久化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%81%E4%B9%85%E5%8C%96"><span class="nav-number">4.1.</span> <span class="nav-text">持久化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81MQ%E7%9A%84%E6%8C%81%E4%B9%85%E5%8C%96%E6%96%B9%E5%BC%8F"><span class="nav-number">4.2.</span> <span class="nav-text">常见MQ的持久化方式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E7%9A%84%E5%88%86%E5%8F%91%E7%AD%96%E7%95%A5"><span class="nav-number">5.</span> <span class="nav-text">消息的分发策略</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90"><span class="nav-number">5.1.</span> <span class="nav-text">场景分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E7%9A%84%E5%88%86%E5%8F%91%E7%AD%96%E7%95%A5-1"><span class="nav-number">5.2.</span> <span class="nav-text">消息的分发策略</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E9%AB%98%E5%8F%AF%E7%94%A8%E5%92%8C%E9%AB%98%E5%8F%AF%E9%9D%A0"><span class="nav-number">6.</span> <span class="nav-text">消息队列高可用和高可靠</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9C%BA%E5%88%B6"><span class="nav-number">6.1.</span> <span class="nav-text">什么是高可用机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E6%A8%A1%E5%BC%8F%E4%B8%80"><span class="nav-number">6.1.1.</span> <span class="nav-text">集群模式一</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E6%A8%A1%E5%BC%8F%E4%BA%8C"><span class="nav-number">6.1.2.</span> <span class="nav-text">集群模式二</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E9%AB%98%E5%8F%AF%E9%9D%A0%E6%9C%BA%E5%88%B6"><span class="nav-number">6.2.</span> <span class="nav-text">什么是高可靠机制</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">神奇的荣荣</p>
+  <div class="site-description" itemprop="description">新知识要不断的总结记录成笔记，要多写，多画，能够清晰透彻的将知识讲给别人听，才是达到理解的层次。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/niubilityoyr" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;niubilityoyr" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">神奇的荣荣</span>
+</div>
+
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+-->
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

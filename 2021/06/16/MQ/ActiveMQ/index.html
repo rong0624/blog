@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yourname.github.io","root":"/blog/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="ActiveMQ基础简介ActiveMQ 是Apache出品，最流行的，能力强劲的开源消息总线。ActiveMQ 是一个完全支持JMS1.1和J2EE 1.4规范的 JMS Provider实现。尽管JMS规范出台已经是很久的事情了，但是JMS在当今的J2EE应用中间仍然扮演着特殊的地位。 特点1）支持来自Java，C，C ++，C＃，Ruby，Perl，Python，PHP的各种跨语言客户端和协">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ActiveMQ">
+<meta property="og:url" content="https://yourname.github.io/blog/2021/06/16/MQ/ActiveMQ/index.html">
+<meta property="og:site_name" content="神奇的荣荣">
+<meta property="og:description" content="ActiveMQ基础简介ActiveMQ 是Apache出品，最流行的，能力强劲的开源消息总线。ActiveMQ 是一个完全支持JMS1.1和J2EE 1.4规范的 JMS Provider实现。尽管JMS规范出台已经是很久的事情了，但是JMS在当今的J2EE应用中间仍然扮演着特殊的地位。 特点1）支持来自Java，C，C ++，C＃，Ruby，Perl，Python，PHP的各种跨语言客户端和协">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://rong0624.gitee.io/images/MQ/ActiveMQ/ActiveMQ%E7%9A%84%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B.png">
+<meta property="article:published_time" content="2021-06-15T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-01T07:05:29.990Z">
+<meta property="article:author" content="神奇的荣荣">
+<meta property="article:tag" content="MQ">
+<meta property="article:tag" content="中间件">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://rong0624.gitee.io/images/MQ/ActiveMQ/ActiveMQ%E7%9A%84%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B.png">
+
+<link rel="canonical" href="https://yourname.github.io/blog/2021/06/16/MQ/ActiveMQ/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>ActiveMQ | 神奇的荣荣</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">神奇的荣荣</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">神奇的荣荣の博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yourname.github.io/blog/2021/06/16/MQ/ActiveMQ/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="神奇的荣荣">
+      <meta itemprop="description" content="新知识要不断的总结记录成笔记，要多写，多画，能够清晰透彻的将知识讲给别人听，才是达到理解的层次。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="神奇的荣荣">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ActiveMQ
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-06-16 00:00:00" itemprop="dateCreated datePublished" datetime="2021-06-16T00:00:00+08:00">2021-06-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-09-01 15:05:29" itemprop="dateModified" datetime="2021-09-01T15:05:29+08:00">2021-09-01</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/MQ/" itemprop="url" rel="index"><span itemprop="name">MQ</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="ActiveMQ基础"><a href="#ActiveMQ基础" class="headerlink" title="ActiveMQ基础"></a>ActiveMQ基础</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>ActiveMQ 是Apache出品，最流行的，能力强劲的开源消息总线。<br>ActiveMQ 是一个完全支持JMS1.1和J2EE 1.4规范的 JMS Provider实现。<br>尽管JMS规范出台已经是很久的事情了，但是JMS在当今的J2EE应用中间仍然扮演着特殊的地位。</p>
+<h2 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h2><p>1）支持来自Java，C，C ++，C＃，Ruby，Perl，Python，PHP的各种跨语言客户端和协议<br>2）完全支持JMS客户端和Message Broker中的企业集成模式<br>3）支持许多高级功能，如消息组，虚拟目标，通配符和复合目标<br>4）完全支持JMS 1.1和J2EE 1.4，支持瞬态，持久，事务和XA消息<br>5）Spring支持，以便ActiveMQ可以轻松嵌入到Spring应用程序中，并使用Spring的XML配置机制进行配置<br>6）专为高性能集群，客户端 - 服务器，基于对等的通信而设计<br>7）CXF和Axis支持，以便ActiveMQ可以轻松地放入这些Web服务堆栈中以提供可靠的消息传递<br>8）可以用作内存JMS提供程序，非常适合单元测试JMS<br>9）支持可插拔传输协议，例如in-VM，TCP，SSL，NIO，UDP，多播，JGroups和JXTA传输<br>10）使用JDBC和高性能日志支持非常快速的持久性</p>
+<h1 id="ActiveMQ的安装"><a href="#ActiveMQ的安装" class="headerlink" title="ActiveMQ的安装"></a>ActiveMQ的安装</h1><h1 id="ActiveMQ的消息形式"><a href="#ActiveMQ的消息形式" class="headerlink" title="ActiveMQ的消息形式"></a>ActiveMQ的消息形式</h1><p>对于消息的传递有两种类型：<br>1）点对点（p2p），即一个生产者和一个消费者一一对应；<br>2）发布/订阅，即一个生产者产生消息并进行发送后，可以由多个消费者进行接收；<br>如图所示：<br><img src="https://rong0624.gitee.io/images/MQ/ActiveMQ/ActiveMQ%E7%9A%84%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B.png" alt="ActiveMQ的消息类型"></p>
+<p>JMS定义了五种不同的消息正文格式，以及调用的消息类型，允许你发送并接收以一些不同形式的数据，提供现有消息格式的一些级别的兼容性。</p>
+<ul>
+<li>StreamMessage – Java原始值的数据流</li>
+<li>MapMessage – 一套名称-值对</li>
+<li>TextMessage – 一个字符串对象</li>
+<li>ObjectMessage – 一个序列化的 Java对象</li>
+<li>BytesMessage – 一个字节的数据流</li>
+</ul>
+<h1 id="ActiveMQ的使用"><a href="#ActiveMQ的使用" class="headerlink" title="ActiveMQ的使用"></a>ActiveMQ的使用</h1><p>导入maven依赖：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- activemq依赖的jar --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.activemq<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>activemq-all<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>5.11.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Queue"><a href="#Queue" class="headerlink" title="Queue"></a>Queue</h2><h3 id="Producer"><a href="#Producer" class="headerlink" title="Producer"></a>Producer</h3><p>生产者：发布消息。</p>
+<p>使用步骤：<br>第一步：创建ConnectionFactory对象，需要指定服务端ip及端口号。<br>第二步：使用ConnectionFactory对象创建一个Connection对象。<br>第三步：开启连接，调用Connection对象的start方法。<br>第四步：使用Connection对象创建一个Session对象。<br>第五步：使用Session对象创建一个Destination对象（topic、queue），此处创建一个Queue对象。<br>第六步：使用Session对象创建一个Producer对象。<br>第七步：创建一个Message对象，创建一个TextMessage对象。<br>第八步：使用Producer对象发送消息。<br>第九步：关闭资源。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">   <span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testQueueProducer</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">	<span class="comment">// 第一步：创建ConnectionFactory对象，需要指定服务端ip及端口号。</span></span><br><span class="line">	<span class="comment">//brokerURL服务器的ip及端口号</span></span><br><span class="line">	ConnectionFactory connectionFactory = <span class="keyword">new</span> ActiveMQConnectionFactory(<span class="string">&quot;tcp://192.168.25.168:61616&quot;</span>);</span><br><span class="line">	<span class="comment">// 第二步：使用ConnectionFactory对象创建一个Connection对象。</span></span><br><span class="line">	Connection connection = connectionFactory.createConnection();</span><br><span class="line">	<span class="comment">// 第三步：开启连接，调用Connection对象的start方法。</span></span><br><span class="line">	connection.start();</span><br><span class="line">	<span class="comment">// 第四步：使用Connection对象创建一个Session对象。</span></span><br><span class="line">	<span class="comment">//第一个参数：是否开启事务。true：开启事务，第二个参数忽略。</span></span><br><span class="line">	<span class="comment">//第二个参数：当第一个参数为false时，才有意义。消息的应答模式。1、自动应答2、手动应答。一般是自动应答。</span></span><br><span class="line">	Session session = connection.createSession(<span class="keyword">false</span>, Session.AUTO_ACKNOWLEDGE);</span><br><span class="line">	<span class="comment">// 第五步：使用Session对象创建一个Destination对象（topic、queue），此处创建一个Queue对象。</span></span><br><span class="line">	<span class="comment">//参数：队列的名称。</span></span><br><span class="line">	Queue queue = session.createQueue(<span class="string">&quot;test-queue&quot;</span>);</span><br><span class="line">	<span class="comment">// 第六步：使用Session对象创建一个Producer对象。</span></span><br><span class="line">	MessageProducer producer = session.createProducer(queue);</span><br><span class="line">	<span class="comment">// 第七步：创建一个Message对象，创建一个TextMessage对象。</span></span><br><span class="line">	<span class="comment">/*TextMessage message = new ActiveMQTextMessage();</span></span><br><span class="line"><span class="comment">	message.setText(&quot;hello activeMq,this is my first test.&quot;);*/</span></span><br><span class="line">	TextMessage textMessage = session.createTextMessage(<span class="string">&quot;hello activeMq,this is my first test.&quot;</span>);</span><br><span class="line">	<span class="comment">// 第八步：使用Producer对象发送消息。</span></span><br><span class="line">	producer.send(textMessage);</span><br><span class="line">	<span class="comment">// 第九步：关闭资源。</span></span><br><span class="line">	producer.close();</span><br><span class="line">	session.close();</span><br><span class="line">	connection.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Consumer"><a href="#Consumer" class="headerlink" title="Consumer"></a>Consumer</h3><h2 id="Topic"><a href="#Topic" class="headerlink" title="Topic"></a>Topic</h2><h3 id="Producer-1"><a href="#Producer-1" class="headerlink" title="Producer"></a>Producer</h3><p>生产者：发布消息。</p>
+<p>使用步骤：<br>第一步：创建ConnectionFactory对象，需要指定服务端ip及端口号。<br>第二步：使用ConnectionFactory对象创建一个Connection对象。<br>第三步：开启连接，调用Connection对象的start方法。<br>第四步：使用Connection对象创建一个Session对象。<br>第五步：使用Session对象创建一个Destination对象（topic、queue），此处创建一个Topic对象。<br>第六步：使用Session对象创建一个Producer对象。<br>第七步：创建一个Message对象，创建一个TextMessage对象。<br>第八步：使用Producer对象发送消息。<br>第九步：关闭资源。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">   <span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testTopicProducer</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">	<span class="comment">// 第一步：创建ConnectionFactory对象，需要指定服务端ip及端口号。</span></span><br><span class="line">	<span class="comment">// brokerURL服务器的ip及端口号</span></span><br><span class="line">	ConnectionFactory connectionFactory = <span class="keyword">new</span> ActiveMQConnectionFactory(<span class="string">&quot;tcp://192.168.25.168:61616&quot;</span>);</span><br><span class="line">	<span class="comment">// 第二步：使用ConnectionFactory对象创建一个Connection对象。</span></span><br><span class="line">	Connection connection = connectionFactory.createConnection();</span><br><span class="line">	<span class="comment">// 第三步：开启连接，调用Connection对象的start方法。</span></span><br><span class="line">	connection.start();</span><br><span class="line">	<span class="comment">// 第四步：使用Connection对象创建一个Session对象。</span></span><br><span class="line">	<span class="comment">// 第一个参数：是否开启事务。true：开启事务，第二个参数忽略。</span></span><br><span class="line">	<span class="comment">// 第二个参数：当第一个参数为false时，才有意义。消息的应答模式。1、自动应答2、手动应答。一般是自动应答。</span></span><br><span class="line">	Session session = connection.createSession(<span class="keyword">false</span>, Session.AUTO_ACKNOWLEDGE);</span><br><span class="line">	<span class="comment">// 第五步：使用Session对象创建一个Destination对象（topic、queue），此处创建一个topic对象。</span></span><br><span class="line">	<span class="comment">// 参数：话题的名称。</span></span><br><span class="line">	Topic topic = session.createTopic(<span class="string">&quot;test-topic&quot;</span>);</span><br><span class="line">	<span class="comment">// 第六步：使用Session对象创建一个Producer对象。</span></span><br><span class="line">	MessageProducer producer = session.createProducer(topic);</span><br><span class="line">	<span class="comment">// 第七步：创建一个Message对象，创建一个TextMessage对象。</span></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * TextMessage message = new ActiveMQTextMessage(); message.setText(</span></span><br><span class="line"><span class="comment">	 * &quot;hello activeMq,this is my first test.&quot;);</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	TextMessage textMessage = session.createTextMessage(<span class="string">&quot;hello activeMq,this is my topic test&quot;</span>);</span><br><span class="line">	<span class="comment">// 第八步：使用Producer对象发送消息。</span></span><br><span class="line">	producer.send(textMessage);</span><br><span class="line">	<span class="comment">// 第九步：关闭资源。</span></span><br><span class="line">	producer.close();</span><br><span class="line">	session.close();</span><br><span class="line">	connection.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Consumer-1"><a href="#Consumer-1" class="headerlink" title="Consumer"></a>Consumer</h3><p>消费者：接收消息。</p>
+<p>使用步骤：<br>第一步：创建一个ConnectionFactory对象。<br>第二步：从ConnectionFactory对象中获得一个Connection对象。<br>第三步：开启连接。调用Connection对象的start方法。<br>第四步：使用Connection对象创建一个Session对象。<br>第五步：使用Session对象创建一个Destination对象。和发送端保持一致topic，并且话题的名称一致。<br>第六步：使用Session对象创建一个Consumer对象。<br>第七步：接收消息。<br>第八步：打印消息。<br>第九步：关闭资源</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">   <span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testTopicConsumer</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">	<span class="comment">// 第一步：创建一个ConnectionFactory对象。</span></span><br><span class="line">	ConnectionFactory connectionFactory = <span class="keyword">new</span> ActiveMQConnectionFactory(<span class="string">&quot;tcp://192.168.25.168:61616&quot;</span>);</span><br><span class="line">	<span class="comment">// 第二步：从ConnectionFactory对象中获得一个Connection对象。</span></span><br><span class="line">	Connection connection = connectionFactory.createConnection();</span><br><span class="line">	<span class="comment">// 第三步：开启连接。调用Connection对象的start方法。</span></span><br><span class="line">	connection.start();</span><br><span class="line">	<span class="comment">// 第四步：使用Connection对象创建一个Session对象。</span></span><br><span class="line">	Session session = connection.createSession(<span class="keyword">false</span>, Session.AUTO_ACKNOWLEDGE);</span><br><span class="line">	<span class="comment">// 第五步：使用Session对象创建一个Destination对象。和发送端保持一致topic，并且话题的名称一致。</span></span><br><span class="line">	Topic topic = session.createTopic(<span class="string">&quot;test-topic&quot;</span>);</span><br><span class="line">	<span class="comment">// 第六步：使用Session对象创建一个Consumer对象。</span></span><br><span class="line">	MessageConsumer consumer = session.createConsumer(topic);</span><br><span class="line">	<span class="comment">// 第七步：接收消息。</span></span><br><span class="line">	consumer.setMessageListener(<span class="keyword">new</span> MessageListener() &#123;</span><br><span class="line"></span><br><span class="line">		<span class="meta">@Override</span></span><br><span class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onMessage</span><span class="params">(Message message)</span> </span>&#123;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				TextMessage textMessage = (TextMessage) message;</span><br><span class="line">				String text = <span class="keyword">null</span>;</span><br><span class="line">				<span class="comment">// 取消息的内容</span></span><br><span class="line">				text = textMessage.getText();</span><br><span class="line">				<span class="comment">// 第八步：打印消息。</span></span><br><span class="line">				System.out.println(text);</span><br><span class="line">			&#125; <span class="keyword">catch</span> (JMSException e) &#123;</span><br><span class="line">				e.printStackTrace();</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;);</span><br><span class="line">	System.out.println(<span class="string">&quot;topic的消费端03。。。。。&quot;</span>);</span><br><span class="line">	<span class="comment">// 等待键盘输入</span></span><br><span class="line">	System.in.read();</span><br><span class="line">	<span class="comment">// 第九步：关闭资源</span></span><br><span class="line">	consumer.close();</span><br><span class="line">	session.close();</span><br><span class="line">	connection.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="ActiveMQ消息数据持久化"><a href="#ActiveMQ消息数据持久化" class="headerlink" title="ActiveMQ消息数据持久化"></a>ActiveMQ消息数据持久化</h1><p>场景问题：服务器断电重启，未被消费的消息是否会在重启之后被继续消费？</p>
+<p>两种选择：非持久性模式/持久性模式<br>1）非持久性模式：服务器断电(关闭)之后，使用非持久性模式时，没有被消费的消息不会继续消费全部丢失；<br>程序会报一个连接关闭异常停止运行，继续启动服务器运行程序，不会接收任何消息。<br>2）持久性模式：服务器断电(关闭)后，使用持久性模式时，没有被消费的消息会继续消费；<br>程序也会报连接关闭异常，但再次启动服务器和程序后，接收方还能继续原来的消息再次接收。</p>
+<p>PERSISTENT：<br>指示JMS provider持久保存消息，以保证消息不会因为JMS provider的失败而丢失</p>
+<p>NON_PERSISTENT:<br>不要求JMS provider持久保存消息</p>
+<p>在消息提供者设置消息持久化：<code>producer.setDeliveryMode(DeliveryMode.PERSISTENT);</code></p>
+<h1 id="JMS可靠消息机制"><a href="#JMS可靠消息机制" class="headerlink" title="JMS可靠消息机制"></a>JMS可靠消息机制</h1><p>JMS消息只有在被确认之后，才认为已经被成功的消费了。<br>消息的成功消费通常包含三个阶段：客户接收消息，客户处理消息和消息被确认。</p>
+<p>在事务性会话中，当一个事务被提交的时候，确认自动发生。在非事务性会话中，消息何时被确认取决于创建会话时的应答模式。<br>改参数有三个可选值：</p>
+<ol>
+<li>Session.AUTO_ACKNOWLEDGE：自动签收<br>当客户成功的从receive方法返回的时候，或者从MessageListener.onMessage方法成功返回的时候，会话自动确认客户收到的消息。</li>
+<li>Session.CLIENT_ACKNOWLEDGE：手动签收<br>客户通过调用消息的acknowledge方法确认消息。需要注意的是，在这种模式中，确认是在会话层上进行，确认一个被消费的消息，将自动确认所有已被会话消费的消息。例如，如果一个消息消费者消费了10个消息，然后确认第5个消息，那么所有10个消息都被确认。</li>
+<li>Session.DUPS_ACKNOWLEDGE：<br>该选择只是会话迟钝的确认消息的提交。如果JMS Provider失败，那么可能会导致一些重复的消息。如果是重复的消息，那么JMS provider必须把消息头的JMSRedelivered字段设置为true</li>
+<li>带事物的session：<br>完成操作后需要手动的commit</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/MQ/" rel="tag"># MQ</a>
+              <a href="/blog/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" rel="tag"># 中间件</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2021/06/15/MQ/JMS/" rel="prev" title="JMS">
+      <i class="fa fa-chevron-left"></i> JMS
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2021/06/20/MySQL/MySQL-%E5%9F%BA%E7%A1%80/" rel="next" title="MySQL-基础">
+      MySQL-基础 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ActiveMQ%E5%9F%BA%E7%A1%80"><span class="nav-number">1.</span> <span class="nav-text">ActiveMQ基础</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%89%B9%E7%82%B9"><span class="nav-number">1.2.</span> <span class="nav-text">特点</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ActiveMQ%E7%9A%84%E5%AE%89%E8%A3%85"><span class="nav-number">2.</span> <span class="nav-text">ActiveMQ的安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ActiveMQ%E7%9A%84%E6%B6%88%E6%81%AF%E5%BD%A2%E5%BC%8F"><span class="nav-number">3.</span> <span class="nav-text">ActiveMQ的消息形式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ActiveMQ%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">ActiveMQ的使用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Queue"><span class="nav-number">4.1.</span> <span class="nav-text">Queue</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Producer"><span class="nav-number">4.1.1.</span> <span class="nav-text">Producer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Consumer"><span class="nav-number">4.1.2.</span> <span class="nav-text">Consumer</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Topic"><span class="nav-number">4.2.</span> <span class="nav-text">Topic</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Producer-1"><span class="nav-number">4.2.1.</span> <span class="nav-text">Producer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Consumer-1"><span class="nav-number">4.2.2.</span> <span class="nav-text">Consumer</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ActiveMQ%E6%B6%88%E6%81%AF%E6%95%B0%E6%8D%AE%E6%8C%81%E4%B9%85%E5%8C%96"><span class="nav-number">5.</span> <span class="nav-text">ActiveMQ消息数据持久化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#JMS%E5%8F%AF%E9%9D%A0%E6%B6%88%E6%81%AF%E6%9C%BA%E5%88%B6"><span class="nav-number">6.</span> <span class="nav-text">JMS可靠消息机制</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">神奇的荣荣</p>
+  <div class="site-description" itemprop="description">新知识要不断的总结记录成笔记，要多写，多画，能够清晰透彻的将知识讲给别人听，才是达到理解的层次。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/niubilityoyr" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;niubilityoyr" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">神奇的荣荣</span>
+</div>
+
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+-->
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

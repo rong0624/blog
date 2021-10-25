@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/blog/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/blog/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/blog/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/blog/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/blog/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/blog/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yourname.github.io","root":"/blog/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Dubbo 高可用集群Dubbo集群很简单，只是需要对服务提供者的配置文件进行修改，配置文件中的dubbo.application.name相同，Dubbo则会认为是同一集群。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dubbo-高级">
+<meta property="og:url" content="https://yourname.github.io/blog/2021/07/08/Dubbo/Dubbo-%E9%AB%98%E7%BA%A7/index.html">
+<meta property="og:site_name" content="神奇的荣荣">
+<meta property="og:description" content="Dubbo 高可用集群Dubbo集群很简单，只是需要对服务提供者的配置文件进行修改，配置文件中的dubbo.application.name相同，Dubbo则会认为是同一集群。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/MySql_SPI%E5%AE%9E%E7%8E%B01.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/MySql_SPI%E5%AE%9E%E7%8E%B02.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/1628502633574.jpg">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/rpc%E9%80%9A%E8%AE%AF.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/rpc%E5%BA%8F%E5%88%97%E5%8C%96.png">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/1627979178965.jpg">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/1627981581425.jpg">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/1627981689580.jpg">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/1627981770108.jpg">
+<meta property="og:image" content="https://rong0624.gitee.io/images/Dubbo/1627981894490.jpg">
+<meta property="article:published_time" content="2021-07-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-09-01T07:05:29.988Z">
+<meta property="article:author" content="神奇的荣荣">
+<meta property="article:tag" content="Dubbo">
+<meta property="article:tag" content="分布式">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://rong0624.gitee.io/images/Dubbo/MySql_SPI%E5%AE%9E%E7%8E%B01.png">
+
+<link rel="canonical" href="https://yourname.github.io/blog/2021/07/08/Dubbo/Dubbo-%E9%AB%98%E7%BA%A7/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Dubbo-高级 | 神奇的荣荣</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/blog/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">神奇的荣荣</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">神奇的荣荣の博客</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/blog/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/blog/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/blog/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/blog/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/blog/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yourname.github.io/blog/2021/07/08/Dubbo/Dubbo-%E9%AB%98%E7%BA%A7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/blog/images/avatar.gif">
+      <meta itemprop="name" content="神奇的荣荣">
+      <meta itemprop="description" content="新知识要不断的总结记录成笔记，要多写，多画，能够清晰透彻的将知识讲给别人听，才是达到理解的层次。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="神奇的荣荣">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Dubbo-高级
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-07-08 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-08T00:00:00+08:00">2021-07-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-09-01 15:05:29" itemprop="dateModified" datetime="2021-09-01T15:05:29+08:00">2021-09-01</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/blog/categories/Dubbo/" itemprop="url" rel="index"><span itemprop="name">Dubbo</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Dubbo-高可用"><a href="#Dubbo-高可用" class="headerlink" title="Dubbo 高可用"></a>Dubbo 高可用</h1><h2 id="集群"><a href="#集群" class="headerlink" title="集群"></a>集群</h2><p>Dubbo集群很简单，只是需要对服务提供者的配置文件进行修改，配置文件中的<code>dubbo.application.name</code>相同，Dubbo则会认为是同一集群。</p>
+<span id="more"></span>
+
+<h2 id="负债均衡策略"><a href="#负债均衡策略" class="headerlink" title="负债均衡策略"></a>负债均衡策略</h2><p>集群负载均衡时，Dubbo 提供了多种均衡策略，缺省为 random 随机调用。</p>
+<h3 id="负载均衡策略"><a href="#负载均衡策略" class="headerlink" title="负载均衡策略"></a>负载均衡策略</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Random LoadBalance</span><br><span class="line">随机均衡算法，按权重设置随机概率。</span><br><span class="line">在一个截面上碰撞的概率高，但调用量越大分布越均匀，而且按概率使用权重后也比较均匀，有利于动态调整提供者权重。</span><br><span class="line"></span><br><span class="line">RoundRobin LoadBalance</span><br><span class="line">权重轮循均衡算法，按公约后的权重设置轮循比率。</span><br><span class="line">存在慢的提供者累积请求的问题，比如：第二台机器很慢，但没挂，当请求调到第二台时就卡在那，久而久之，所有请求都卡在调到第二台上。</span><br><span class="line"></span><br><span class="line">LeastActive LoadBalance</span><br><span class="line">最少活跃调用数均衡算法，相同活跃数的随机，活跃数指调用前后计数差。</span><br><span class="line">使慢的提供者收到更少请求，因为越慢的提供者的调用前后计数差会越大。</span><br><span class="line"></span><br><span class="line">ConsistentHash LoadBalance</span><br><span class="line">一致性 Hash均衡算法，相同参数的请求总是发到同一提供者。</span><br><span class="line">当某一台提供者挂时，原本发往该提供者的请求，基于虚拟节点，平摊到其它提供者，不会引起剧烈变动。算法参见：http://en.wikipedia.org/wiki/Consistent_hashing</span><br><span class="line">缺省只对第一个参数 Hash，如果要修改，请配置 &lt;dubbo:parameter key=&quot;hash.arguments&quot; value=&quot;0,1&quot; /&gt;</span><br><span class="line">缺省用 160 份虚拟节点，如果要修改，请配置 &lt;dubbo:parameter key=&quot;hash.nodes&quot; value=&quot;320&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="负债均衡配置"><a href="#负债均衡配置" class="headerlink" title="负债均衡配置"></a>负债均衡配置</h3><p>负债均衡配置很简单。<br>服务端和客户端都可以配置服务级别或者方法级别的策略。</p>
+<p>服务提供者：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 全局配置负债均衡 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:provider</span> <span class="attr">loadbalance</span>=<span class="string">&quot;roundrobin&quot;</span> /&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 接口级别配置负债均衡 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:service</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">ref</span>=<span class="string">&quot;userServiceImpl&quot;</span> <span class="attr">loadbalance</span>=<span class="string">&quot;roundrobin&quot;</span> &gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dubbo:method</span> <span class="attr">name</span>=<span class="string">&quot;getUserAddress&quot;</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dubbo:service</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 方法级别配置负债均衡 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:service</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">ref</span>=<span class="string">&quot;userServiceImpl&quot;</span> &gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dubbo:method</span> <span class="attr">name</span>=<span class="string">&quot;getUserAddress&quot;</span> <span class="attr">loadbalance</span>=<span class="string">&quot;roundrobin&quot;</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dubbo:service</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>服务消费者：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 全局配置负债均衡 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:consumer</span> <span class="attr">timeout</span>=<span class="string">&quot;3000&quot;</span> <span class="attr">loadbalance</span>=<span class="string">&quot;roundrobin&quot;</span>/&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 接口级别配置负债均衡 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">loadbalance</span>=<span class="string">&quot;roundrobin&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dubbo:method</span> <span class="attr">name</span>=<span class="string">&quot;getUserAddress&quot;</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dubbo:reference</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 方法级别配置负债均衡 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> &gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">dubbo:method</span> <span class="attr">name</span>=<span class="string">&quot;getUserAddress&quot;</span> <span class="attr">loadbalance</span>=<span class="string">&quot;roundrobin&quot;</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dubbo:reference</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="集群容错"><a href="#集群容错" class="headerlink" title="集群容错"></a>集群容错</h2><p>集群调用失败时，Dubbo 提供了多种容错方案，缺省为 failover 重试。</p>
+<h3 id="集群容错-1"><a href="#集群容错-1" class="headerlink" title="集群容错"></a>集群容错</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">Failover Cluster</span><br><span class="line">失败自动切换，当出现失败，重试其它服务器。通常用于读操作，但重试会带来更长延迟。可通过 retries=&quot;2&quot; 来设置重试次数(不含第一次)。</span><br><span class="line"></span><br><span class="line">重试次数配置如下：</span><br><span class="line">&lt;dubbo:service retries=&quot;2&quot; /&gt;</span><br><span class="line">或</span><br><span class="line">&lt;dubbo:reference retries=&quot;2&quot; /&gt;</span><br><span class="line">或</span><br><span class="line">&lt;dubbo:reference&gt;</span><br><span class="line">    &lt;dubbo:method name=&quot;findFoo&quot; retries=&quot;2&quot; /&gt;</span><br><span class="line">&lt;/dubbo:reference&gt;</span><br><span class="line"></span><br><span class="line">Failfast Cluster</span><br><span class="line">快速失败，只发起一次调用，失败立即报错。通常用于非幂等性的写操作，比如新增记录。</span><br><span class="line"></span><br><span class="line">Failsafe Cluster</span><br><span class="line">失败安全，出现异常时，直接忽略。通常用于写入审计日志等操作。</span><br><span class="line"></span><br><span class="line">Failback Cluster</span><br><span class="line">失败自动恢复，后台记录失败请求，定时重发。通常用于消息通知操作。</span><br><span class="line"></span><br><span class="line">Forking Cluster</span><br><span class="line">并行调用多个服务器，只要一个成功即返回。通常用于实时性要求较高的读操作，但需要浪费更多服务资源。可通过 forks=&quot;2&quot; 来设置最大并行数。</span><br><span class="line"></span><br><span class="line">Broadcast Cluster</span><br><span class="line">广播调用所有提供者，逐个调用，任意一台报错则报错。通常用于通知所有提供者更新缓存或日志等本地资源信息。</span><br></pre></td></tr></table></figure>
+
+<h3 id="集群容错配置"><a href="#集群容错配置" class="headerlink" title="集群容错配置"></a>集群容错配置</h3><p>按照以下示例在服务提供方和消费方配置集群模式</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;dubbo:service cluster=&quot;failsafe&quot; /&gt;</span><br><span class="line">或</span><br><span class="line">&lt;dubbo:reference cluster=&quot;failsafe&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="服务降级"><a href="#服务降级" class="headerlink" title="服务降级"></a>服务降级</h2><h3 id="服务降级概念"><a href="#服务降级概念" class="headerlink" title="服务降级概念"></a>服务降级概念</h3><p>当服务器压力剧增的情况下，根据当前业务情况及流量对一些服务和页面有策略的降级（返回一个友好提示给客户端，不去执行主业务逻辑，调用fallBack本地方法），以此释放服务器资源以保证核心任务的正常运行。</p>
+<h3 id="Dubbo-服务降级机制"><a href="#Dubbo-服务降级机制" class="headerlink" title="Dubbo 服务降级机制"></a>Dubbo 服务降级机制</h3><p>Dubbo的服务降级采用的是mock机制；即当服务提供者出错时（抛出 RpcException），进行 mock 调用；<br>同时也可以用于本地测试，用服务消费者端配置的 mock 服务替代要调用的远程服务，亦或者是对某个服务消费者屏蔽服务提供者，不让其进行远程调用。</p>
+<p>其具有两种策略方式：</p>
+<ul>
+<li>fail：当服务消费者调用服务提供者失败后，会去执行配置的 mock 策略。 配置方式为 mock=“fail:策略” 或者 mock=“策略”。</li>
+<li>force：当服务消费者调用服务提供者时，会直接执行 mock 配置的策略，不会进行服务调用。</li>
+</ul>
+<h3 id="fail-策略"><a href="#fail-策略" class="headerlink" title="fail 策略"></a>fail 策略</h3><p>当服务消费者调用服务提供者失败后，会去执行配置的 mock 策略。 配置方式为 mock=“fail:策略” 或者 mock=“策略”。</p>
+<h4 id="mock-“true”"><a href="#mock-“true”" class="headerlink" title="mock=“true”"></a>mock=“true”</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;true&quot;</span> /&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;fail:true&quot;</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+<p>解释：指定 mock 策略为布尔类型，且为 true，此时需要消费端提供服务接口的 mock 实现类，该类的包名需要与服务接口一致，且类名格式为 [接口名 + Mock], 即 com.oyr.user.service.UserServiceMock, 当调用远程服务失败后, 就会执行 UserServiceMock的相同方法（远程调用是hello方法，那么即会调用mock的hello方法）, 如果不提供此 mock 类，dubbo 消费端会启动失败。</p>
+<h4 id="mock-“具体的mock实现类”"><a href="#mock-“具体的mock实现类”" class="headerlink" title="mock=“具体的mock实现类”"></a>mock=“具体的mock实现类”</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;com.oyr.user.service.mock.UserServiceMock&quot;</span> /&gt;</span></span><br><span class="line">or</span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;fail:com.oyr.user.service.mock.UserServiceMock&quot;</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>解释：指定 mock 策略为具体的 mock 实现类, 当调用远程服务失败时, 就会执行 mock 实现类的相同方法.</p>
+<h4 id="mock-“抛出自定义异常”"><a href="#mock-“抛出自定义异常”" class="headerlink" title="mock=“抛出自定义异常”"></a>mock=“抛出自定义异常”</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;throw org.apache.dubbo.demo.consumer.exception.CustomException&quot;</span> /&gt;</span></span><br><span class="line">or</span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;fail:throw org.apache.dubbo.demo.consumer.exception.CustomException&quot;</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>解释：指定 mock 策略为抛出自定义异常, 当远程服务调用失败后, 会给服务消费者抛出自定义异常.</p>
+<h4 id="mock-“返回-mock-数据”"><a href="#mock-“返回-mock-数据”" class="headerlink" title="mock=“返回 mock 数据”"></a>mock=“返回 mock 数据”</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;return null&quot;</span> /&gt;</span></span><br><span class="line">or</span><br><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;userService&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;com.oyr.user.service.UserService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;fail:return null&quot;</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>解释：指定 mock 属性值为返回 mock 数据，当远程服务调用失败后，就会给服务消费者返回null。</p>
+<h3 id="force-策略"><a href="#force-策略" class="headerlink" title="force 策略"></a>force 策略</h3><p>当服务消费者调用服务提供者时，会直接执行 mock 配置的策略，不会进行服务调用。<br>具体的策略跟 fail 策略一致，此处不再详细说明。</p>
+<h4 id="mock-“force-true”"><a href="#mock-“force-true”" class="headerlink" title="mock=“force:true”"></a>mock=“force:true”</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;demoService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;“force:true&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;org.apache.dubbo.demo.DemoService&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="mock-“force-执行Mock实现类”"><a href="#mock-“force-执行Mock实现类”" class="headerlink" title="mock=“force: 执行Mock实现类”"></a>mock=“force: 执行Mock实现类”</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;demoService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;force:com.apache.dubbo.demo.DemoServiceMock2&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;org.apache.dubbo.demo.DemoService&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="mock-“force-抛出自定义异常”"><a href="#mock-“force-抛出自定义异常”" class="headerlink" title="mock=“force:抛出自定义异常”"></a>mock=“force:抛出自定义异常”</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;demoService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;force:throw com.apache.dubbo.demo.XXXException&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;org.apache.dubbo.demo.DemoService&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="mock-“force-返回mock数据”"><a href="#mock-“force-返回mock数据”" class="headerlink" title="mock=“force:返回mock数据”"></a>mock=“force:返回mock数据”</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dubbo:reference</span> <span class="attr">id</span>=<span class="string">&quot;demoService&quot;</span> <span class="attr">mock</span>=<span class="string">&quot;force:return xxx&quot;</span> <span class="attr">interface</span>=<span class="string">&quot;org.apache.dubbo.demo.DemoService&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="Dubbo-SPI-机制"><a href="#Dubbo-SPI-机制" class="headerlink" title="Dubbo SPI 机制"></a>Dubbo SPI 机制</h1><h2 id="SPI-是什么？"><a href="#SPI-是什么？" class="headerlink" title="SPI 是什么？"></a>SPI 是什么？</h2><p>SPI（service provider interface）。<br>SPI 就是通过动态加载机制实现面向接口编程;<br>SPI 是Java提供的一套用来被第三方实现或者扩展的接口，它可以用来启用框架扩展和替换组件;</p>
+<p>SPI 一般用在哪儿？<br>主要在框架中使用，用于插件扩展的场景，比如说你开发了一个给别人使用的开源框架，如果你想让别人自己写个插件，插到你的开源框架里面，从而扩展某个功能，这个时候 SPI 思想就用上了。</p>
+<p>举个例子：你有一个接口 A。A1/A2/A3 分别是接口A的不同实现。你通过配置 接口 A = 实现 A2，那么在系统实际运行的时候，会加载你的配置，用实现 A2 实例化一个对象来提供服务。</p>
+<h2 id="API-和-SPI-的区别"><a href="#API-和-SPI-的区别" class="headerlink" title="API 和 SPI 的区别"></a>API 和 SPI 的区别</h2><p>API （Application Programming Interface）在大多数情况下，都是实现方制定接口并完成对接口的实现，调用方仅仅依赖接口调用，且无权选择不同实现。 从使用人员上来说，API 直接被应用开发人员使用。</p>
+<p>SPI （Service Provider Interface）是调用方来制定接口规范，提供给外部来实现，调用方在调用时则选择自己需要的外部实现。  从使用人员上来说，SPI 被框架扩展人员使用。</p>
+<h2 id="Java-SPI"><a href="#Java-SPI" class="headerlink" title="Java SPI"></a>Java SPI</h2><h3 id="Java-SPI-简介"><a href="#Java-SPI-简介" class="headerlink" title="Java SPI 简介"></a>Java SPI 简介</h3><p>SPI 经典的思想体现，大家平时都在用，比如说 jdbc。<br>Java 定义了一套 jdbc 的接口，但是 Java 并没有提供 jdbc 的实现类。<br>但是实际上项目跑的时候，要使用 jdbc 接口的哪些实现类呢？一般来说，我们要根据自己使用的数据库，比如 mysql，你就将 mysql-jdbc-connector.jar 引入进来；oracle，你就将 oracle-jdbc-connector.jar 引入进来。<br>在系统跑的时候，碰到你使用 jdbc 的接口，他会在底层使用你引入的那个 jar 中提供的实现类。</p>
+<h3 id="Java-SPI-实现细节"><a href="#Java-SPI-实现细节" class="headerlink" title="Java SPI 实现细节"></a>Java SPI 实现细节</h3><p>Java SPI 约定在 Classpath 下的 META-INF/services/ 目录里创建一个<strong>以服务接口命名的文件</strong>，然后<strong>文件里面记录的是此 jar 包提供的具体实现类的全限定名。</strong><br>这样当我们引用了某个jar包的时候，就可以去找这个jar包的META-INF/services/目录，再根据接口名找到文件，然后读取文件里面的内容去进行实现类的加载与实例化。</p>
+<p>看个案例：看下MySql是怎么做的：<br><img src="https://rong0624.gitee.io/images/Dubbo/MySql_SPI%E5%AE%9E%E7%8E%B01.png" alt="MySql SPI实现1"><br>再看下文件里的内容：<br><img src="https://rong0624.gitee.io/images/Dubbo/MySql_SPI%E5%AE%9E%E7%8E%B02.png" alt="MySql SPI实现2"></p>
+<h3 id="Java-SPI-缺点"><a href="#Java-SPI-缺点" class="headerlink" title="Java SPI 缺点"></a>Java SPI 缺点</h3><p>Java SPI 在查找扩展实现类的时候遍历 SPI 的配置文件并且将实现类全部实例化，假设一个实现类初始化过程比较消耗资源且耗时，但是你的代码里面又用不上它，这就产生了资源的浪费。</p>
+<p>所以说 Java SPI 无法按需加载实现类。</p>
+<h2 id="Dubbo-SPI"><a href="#Dubbo-SPI" class="headerlink" title="Dubbo SPI"></a>Dubbo SPI</h2><h3 id="Dubbo-SPI-简介"><a href="#Dubbo-SPI-简介" class="headerlink" title="Dubbo SPI 简介"></a>Dubbo SPI 简介</h3><p>Dubbo 也用了 SPI 思想，不过没有用 jdk 的 SPI 机制，是自己实现的一套 SPI 机制。<br>Dubbo SPI：是按需加载实现类的，按需加载的话首先你得给个名字，通过名字去文件里面找到对应的实现类全限定名然后加载实例化即可。Dubbo 就是这样设计的，配置文件里面存放的是键值对。</p>
+<p>我们先来看一下 Dubbo 对配置文件目录的约定，不同于 Java SPI ，Dubbo 分为了三类目录：</p>
+<ul>
+<li>META-INF/services/ 目录：该目录下的 SPI 配置文件是为了用来兼容 Java SPI 。</li>
+<li>META-INF/dubbo/ 目录：该目录存放用户自定义的 SPI 配置文件。</li>
+<li>META-INF/dubbo/internal/ 目录：该目录存放 Dubbo 内部使用的 SPI 配置文件。</li>
+</ul>
+<p>注意：Dubbo SPI 除了可以按需加载实现类之外，增加了 IOC 和 AOP 的特性，还有个自适应扩展机制。</p>
+<h3 id="Dubbo-SPI-实现细节"><a href="#Dubbo-SPI-实现细节" class="headerlink" title="Dubbo SPI 实现细节"></a>Dubbo SPI 实现细节</h3><p>注意：当前拿 Dubbo Protocol 来演示。</p>
+<p>Protocol 接口，在系统运行的时候，dubbo 会判断一下应该选用这个 Protocol 接口的哪个实现类来实例化对象来使用。<br>它会去找一个你配置的 Protocol，将你配置的 Protocol 实现类，加载到 jvm 中来，然后实例化对象，就用你的那个 Protocol 实现类就可以了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SPI(&quot;dubbo&quot;)</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Protocol</span> </span>&#123;  </span><br><span class="line">      </span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">getDefaultPort</span><span class="params">()</span></span>;  </span><br><span class="line">  </span><br><span class="line">    <span class="meta">@Adaptive</span>  </span><br><span class="line">    &lt;T&gt; <span class="function">Exporter&lt;T&gt; <span class="title">export</span><span class="params">(Invoker&lt;T&gt; invoker)</span> <span class="keyword">throws</span> RpcException</span>;  </span><br><span class="line">  </span><br><span class="line">    <span class="meta">@Adaptive</span>  </span><br><span class="line">    &lt;T&gt; <span class="function">Invoker&lt;T&gt; <span class="title">refer</span><span class="params">(Class&lt;T&gt; type, URL url)</span> <span class="keyword">throws</span> RpcException</span>;  </span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span></span>;  </span><br><span class="line">  </span><br><span class="line">&#125;  </span><br></pre></td></tr></table></figure>
+
+<p>在 dubbo 自己的 jar 里，在/META_INF/dubbo/internal/com.alibaba.dubbo.rpc.Protocol文件中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">dubbo=org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol</span><br><span class="line">injvm=org.apache.dubbo.rpc.protocol.injvm.InjvmProtocol</span><br><span class="line">http=org.apache.dubbo.rpc.protocol.http.HttpProtocol</span><br><span class="line">rmi=org.apache.dubbo.rpc.protocol.rmi.RmiProtocol</span><br><span class="line">hessian=org.apache.dubbo.rpc.protocol.hessian.HessianProtocol</span><br><span class="line">org.apache.dubbo.rpc.protocol.webservice.WebServiceProtocol</span><br><span class="line">thrift=org.apache.dubbo.rpc.protocol.thrift.ThriftProtocol</span><br><span class="line">native-thrift=org.apache.dubbo.rpc.protocol.nativethrift.ThriftProtocol</span><br><span class="line">memcached=org.apache.dubbo.rpc.protocol.memcached.MemcachedProtocol</span><br><span class="line">redis=org.apache.dubbo.rpc.protocol.redis.RedisProtocol</span><br><span class="line">rest=org.apache.dubbo.rpc.protocol.rest.RestProtocol</span><br><span class="line">xmlrpc=org.apache.dubbo.xml.rpc.protocol.xmlrpc.XmlRpcProtocol</span><br><span class="line">grpc=org.apache.dubbo.rpc.protocol.grpc.GrpcProtocol</span><br></pre></td></tr></table></figure>
+
+<p>所以说，这就看到了 dubbo 的 SPI 机制默认是怎么玩儿的了，其实就是 Protocol 接口，@SPI(“dubbo”) 说的是，通过 SPI 机制来提供实现类，实现类是通过 dubbo 作为默认 key 去配置文件里找到的，配置文件名称与接口全限定名一样的，通过 dubbo 作为 key 可以找到默认的实现类就是 com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol。</p>
+<p>如果想要动态替换掉默认的实现类，需要使用 @Adaptive 接口，Protocol 接口中，有两个方法加了 @Adaptive 注解，就是说那俩接口会被代理实现。<br>比如这个 Protocol 接口搞了俩 @Adaptive 注解标注了方法，在运行的时候会针对 Protocol 生成代理类，这个代理类的那俩方法里面会有代理代码，代理代码会在运行的时候动态根据 url 中的 protocol 来获取那个 key，默认是 dubbo，你也可以自己指定，你如果指定了别的 key，那么就会获取别的实现类的实例了。</p>
+<h3 id="Dubbo-自定义扩展组件"><a href="#Dubbo-自定义扩展组件" class="headerlink" title="Dubbo 自定义扩展组件"></a>Dubbo 自定义扩展组件</h3><p>这里展示一下，如何去扩展 Dubbo Protocol 的组件；</p>
+<h4 id="新开一个maven工程（protocol-demo），打包方式为jar；"><a href="#新开一个maven工程（protocol-demo），打包方式为jar；" class="headerlink" title="新开一个maven工程（protocol-demo），打包方式为jar；"></a>新开一个maven工程（protocol-demo），打包方式为jar；</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">&quot;http://maven.apache.org/POM/4.0.0&quot;</span></span></span><br><span class="line"><span class="tag">         <span class="attr">xmlns:xsi</span>=<span class="string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span></span><br><span class="line"><span class="tag">         <span class="attr">xsi:schemaLocation</span>=<span class="string">&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.oyr<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>protocol-demo<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0-SNAPSHOT<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">packaging</span>&gt;</span>jar<span class="tag">&lt;/<span class="name">packaging</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!-- dubbo --&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.dubbo<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>dubbo-spring-boot-starter<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.7.7<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Protocol-自定义实现"><a href="#Protocol-自定义实现" class="headerlink" title="Protocol 自定义实现"></a>Protocol 自定义实现</h4><p>以下代码，是将 Dubbo RmiProtocol 的实现复制过来的，当做是自定义的 Protocol 实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.oyr.dubbo.protocol;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.common.URL;</span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.rpc.RpcException;</span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.rpc.protocol.AbstractProxyProtocol;</span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.rpc.protocol.rmi.RmiRemoteInvocation;</span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.rpc.service.GenericService;</span><br><span class="line"><span class="keyword">import</span> org.apache.dubbo.rpc.support.ProtocolUtils;</span><br><span class="line"><span class="keyword">import</span> org.springframework.remoting.RemoteAccessException;</span><br><span class="line"><span class="keyword">import</span> org.springframework.remoting.rmi.RmiProxyFactoryBean;</span><br><span class="line"><span class="keyword">import</span> org.springframework.remoting.rmi.RmiServiceExporter;</span><br><span class="line"><span class="keyword">import</span> org.springframework.remoting.support.RemoteInvocation;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.net.SocketTimeoutException;</span><br><span class="line"><span class="keyword">import</span> java.rmi.RemoteException;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="keyword">static</span> org.apache.dubbo.common.Version.isRelease263OrHigher;</span><br><span class="line"><span class="keyword">import</span> <span class="keyword">static</span> org.apache.dubbo.common.Version.isRelease270OrHigher;</span><br><span class="line"><span class="keyword">import</span> <span class="keyword">static</span> org.apache.dubbo.common.constants.CommonConstants.DUBBO_VERSION_KEY;</span><br><span class="line"><span class="keyword">import</span> <span class="keyword">static</span> org.apache.dubbo.common.constants.CommonConstants.RELEASE_KEY;</span><br><span class="line"><span class="keyword">import</span> <span class="keyword">static</span> org.apache.dubbo.rpc.Constants.GENERIC_KEY;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyProtocol</span> <span class="keyword">extends</span> <span class="title">AbstractProxyProtocol</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> DEFAULT_PORT = <span class="number">1099</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MyProtocol</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">super</span>(RemoteAccessException.class, RemoteException.class);</span><br><span class="line">        System.out.println(<span class="string">&quot;MyProtocol Init&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getDefaultPort</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> DEFAULT_PORT;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> &lt;T&gt; <span class="function">Runnable <span class="title">doExport</span><span class="params">(<span class="keyword">final</span> T impl, Class&lt;T&gt; type, URL url)</span> <span class="keyword">throws</span> RpcException </span>&#123;</span><br><span class="line">        RmiServiceExporter rmiServiceExporter = createExporter(impl, type, url, <span class="keyword">false</span>);</span><br><span class="line">        RmiServiceExporter genericServiceExporter = createExporter(impl, GenericService.class, url, <span class="keyword">true</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    rmiServiceExporter.destroy();</span><br><span class="line">                    genericServiceExporter.destroy();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">                    logger.warn(e.getMessage(), e);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="meta">@SuppressWarnings(&quot;unchecked&quot;)</span></span><br><span class="line">    <span class="keyword">protected</span> &lt;T&gt; <span class="function">T <span class="title">doRefer</span><span class="params">(<span class="keyword">final</span> Class&lt;T&gt; serviceType, <span class="keyword">final</span> URL url)</span> <span class="keyword">throws</span> RpcException </span>&#123;</span><br><span class="line">        <span class="keyword">final</span> RmiProxyFactoryBean rmiProxyFactoryBean = <span class="keyword">new</span> RmiProxyFactoryBean();</span><br><span class="line">        <span class="keyword">final</span> String generic = url.getParameter(GENERIC_KEY);</span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">boolean</span> isGeneric = ProtocolUtils.isGeneric(generic) || serviceType.equals(GenericService.class);</span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">          RMI needs extra parameter since it uses customized remote invocation object</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">          The customized RemoteInvocation was firstly introduced in v2.6.3; The package was renamed to &#x27;org.apache.*&#x27; since v2.7.0</span></span><br><span class="line"><span class="comment">          Considering the above two conditions, we need to check before sending customized RemoteInvocation:</span></span><br><span class="line"><span class="comment">          1. if the provider version is v2.7.0 or higher, send &#x27;org.apache.dubbo.rpc.protocol.rmi.RmiRemoteInvocation&#x27;.</span></span><br><span class="line"><span class="comment">          2. if the provider version is v2.6.3 or higher, send &#x27;com.alibaba.dubbo.rpc.protocol.rmi.RmiRemoteInvocation&#x27;.</span></span><br><span class="line"><span class="comment">          3. if the provider version is lower than v2.6.3, does not use customized RemoteInvocation.</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">if</span> (isRelease270OrHigher(url.getParameter(RELEASE_KEY))) &#123;</span><br><span class="line">            rmiProxyFactoryBean.setRemoteInvocationFactory(methodInvocation -&gt; &#123;</span><br><span class="line">                RemoteInvocation invocation = <span class="keyword">new</span> RmiRemoteInvocation(methodInvocation);</span><br><span class="line">                <span class="keyword">if</span> (isGeneric) &#123;</span><br><span class="line">                    invocation.addAttribute(GENERIC_KEY, generic);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> invocation;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (isRelease263OrHigher(url.getParameter(DUBBO_VERSION_KEY))) &#123;</span><br><span class="line">            rmiProxyFactoryBean.setRemoteInvocationFactory(methodInvocation -&gt; &#123;</span><br><span class="line">                RemoteInvocation invocation = <span class="keyword">new</span> com.alibaba.dubbo.rpc.protocol.rmi.RmiRemoteInvocation(methodInvocation);</span><br><span class="line">                <span class="keyword">if</span> (isGeneric) &#123;</span><br><span class="line">                    invocation.addAttribute(GENERIC_KEY, generic);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> invocation;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">        String serviceUrl = url.toIdentityString();</span><br><span class="line">        <span class="keyword">if</span> (isGeneric) &#123;</span><br><span class="line">            serviceUrl = serviceUrl + <span class="string">&quot;/&quot;</span> + GENERIC_KEY;</span><br><span class="line">        &#125;</span><br><span class="line">        rmiProxyFactoryBean.setServiceUrl(serviceUrl);</span><br><span class="line">        rmiProxyFactoryBean.setServiceInterface(serviceType);</span><br><span class="line">        rmiProxyFactoryBean.setCacheStub(<span class="keyword">true</span>);</span><br><span class="line">        rmiProxyFactoryBean.setLookupStubOnStartup(<span class="keyword">true</span>);</span><br><span class="line">        rmiProxyFactoryBean.setRefreshStubOnConnectFailure(<span class="keyword">true</span>);</span><br><span class="line">        rmiProxyFactoryBean.afterPropertiesSet();</span><br><span class="line">        <span class="keyword">return</span> (T) rmiProxyFactoryBean.getObject();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">int</span> <span class="title">getErrorCode</span><span class="params">(Throwable e)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (e <span class="keyword">instanceof</span> RemoteAccessException) &#123;</span><br><span class="line">            e = e.getCause();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (e != <span class="keyword">null</span> &amp;&amp; e.getCause() != <span class="keyword">null</span>) &#123;</span><br><span class="line">            Class&lt;?&gt; cls = e.getCause().getClass();</span><br><span class="line">            <span class="keyword">if</span> (SocketTimeoutException.class.equals(cls)) &#123;</span><br><span class="line">                <span class="keyword">return</span> RpcException.TIMEOUT_EXCEPTION;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (IOException.class.isAssignableFrom(cls)) &#123;</span><br><span class="line">                <span class="keyword">return</span> RpcException.NETWORK_EXCEPTION;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (ClassNotFoundException.class.isAssignableFrom(cls)) &#123;</span><br><span class="line">                <span class="keyword">return</span> RpcException.SERIALIZATION_EXCEPTION;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">super</span>.getErrorCode(e);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> &lt;T&gt; <span class="function">RmiServiceExporter <span class="title">createExporter</span><span class="params">(T impl, Class&lt;?&gt; type, URL url, <span class="keyword">boolean</span> isGeneric)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">final</span> RmiServiceExporter rmiServiceExporter = <span class="keyword">new</span> RmiServiceExporter();</span><br><span class="line">        rmiServiceExporter.setRegistryPort(url.getPort());</span><br><span class="line">        <span class="keyword">if</span> (isGeneric) &#123;</span><br><span class="line">            rmiServiceExporter.setServiceName(url.getPath() + <span class="string">&quot;/&quot;</span> + GENERIC_KEY);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            rmiServiceExporter.setServiceName(url.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">        rmiServiceExporter.setServiceInterface(type);</span><br><span class="line">        rmiServiceExporter.setService(impl);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            rmiServiceExporter.afterPropertiesSet();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (RemoteException e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> RpcException(e.getMessage(), e);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> rmiServiceExporter;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Dubbo规定目录下配置"><a href="#Dubbo规定目录下配置" class="headerlink" title="Dubbo规定目录下配置"></a>Dubbo规定目录下配置</h4><p>1）在工程 resources 目录下新建 ETA-INF/services 目录；<br>2）在 ETA-INF/services 目录下，新建一个 com.alibaba.dubbo.rpc.Protocol 文件；<br>3）指定 com.alibaba.dubbo.rpc.Protocol 文件内容：  </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">my=com.oyr.dubbo.protocol.MyProtocol</span><br></pre></td></tr></table></figure>
+
+<h4 id="修改服务提供者，使用自定义的-Protocol-实现"><a href="#修改服务提供者，使用自定义的-Protocol-实现" class="headerlink" title="修改服务提供者，使用自定义的 Protocol 实现"></a>修改服务提供者，使用自定义的 Protocol 实现</h4><p>1）把自定义实现的jar依赖到服务提供者中</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.oyr<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>protocol-demo<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0-SNAPSHOT<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>2）修改配置，协议使用自定义实现</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#dubbo 配置</span></span><br><span class="line"><span class="meta">dubbo.application.name</span>=<span class="string">user-provider</span></span><br><span class="line"><span class="meta">dubbo.registry.protocol</span>=<span class="string">zookeeper</span></span><br><span class="line"><span class="meta">dubbo.registry.address</span>=<span class="string">127.0.0.1:2181</span></span><br><span class="line"><span class="comment"># 使用自定义实现的协议</span></span><br><span class="line"><span class="meta">dubbo.protocol.name</span>=<span class="string">my</span></span><br><span class="line"><span class="meta">dubbo.protocol.port</span>=<span class="string">20888</span></span><br></pre></td></tr></table></figure>
+
+<p>3）启动服务提供者，查看效果；<br>启动服务提供者，控制台应该打印出：MyProtocol Init；<br>这既代表已经使用了自定义实现的协议；</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>服务提供者启动的时候，就会加载 my=com.bingo.MyProtocol 这行配置里，接着会根据你的配置使用你定义好的 MyProtocol 了；</p>
+<p>dubbo 里面提供了大量的类似上面的扩展点，就是说，你如果要扩展一个东西，只要自己写个 jar，让你的 consumer 或者是 provider 工程，依赖你的那个 jar，在你的 jar 里指定目录下配置好接口名称对应的文件，里面通过 key=实现类。<br>然后对于对应的组件，类似 <a href="dubbo:protocol">dubbo:protocol</a> 用你的那个 key 对应的实现类来实现某个接口，你可以自己去扩展 dubbo 的各种功能，提供你自己的实现。</p>
+<h2 id="参考博客"><a href="#参考博客" class="headerlink" title="参考博客"></a>参考博客</h2><p><a target="_blank" rel="noopener" href="https://shishan100.gitee.io/docs/#/./docs/distributed-system/dubbo-spi">https://shishan100.gitee.io/docs/#/./docs/distributed-system/dubbo-spi</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_35190492/article/details/108256452?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522162808615116780262585211%2522%252C%2522scm%2522%253A%252220140713.130102334.pc%255Fblog.%2522%257D&amp;request_id=162808615116780262585211&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~blog~first_rank_v2~rank_v29-1-108256452.pc_v2_rank_blog_default&amp;utm_term=spi&amp;spm=1018.2226.3001.4450">https://blog.csdn.net/qq_35190492/article/details/108256452?ops_request_misc=%257B%2522request%255Fid%2522%253A%2522162808615116780262585211%2522%252C%2522scm%2522%253A%252220140713.130102334.pc%255Fblog.%2522%257D&amp;request_id=162808615116780262585211&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~blog~first_rank_v2~rank_v29-1-108256452.pc_v2_rank_blog_default&amp;utm_term=spi&amp;spm=1018.2226.3001.4450</a></p>
+<h1 id="Dubbo-Container（服务容器）"><a href="#Dubbo-Container（服务容器）" class="headerlink" title="Dubbo Container（服务容器）"></a>Dubbo Container（服务容器）</h1><h2 id="Dubbo-Container-简介"><a href="#Dubbo-Container-简介" class="headerlink" title="Dubbo Container 简介"></a>Dubbo Container 简介</h2><p>Dubbo Container 是一个独立的启动程序，因为后台服务不需要 Tomcat 或 JBoss 等 Web 容器的功能，如果硬要用 Web 容器去加载服务提供方，增加复杂性，也浪费资源。</p>
+<p>服务容器只是一个简单的 Main 方法，并加载一个简单的 Spring 容器，用于暴露服务。</p>
+<h2 id="Dubbo-内置了几种服务容器"><a href="#Dubbo-内置了几种服务容器" class="headerlink" title="Dubbo 内置了几种服务容器"></a>Dubbo 内置了几种服务容器</h2><h3 id="服务容器分类"><a href="#服务容器分类" class="headerlink" title="服务容器分类"></a>服务容器分类</h3><p>dubbo 内置了 spring, jetty, log4j 等服务容器；<br>当然也可以自己扩展服务容器进行加载；</p>
+<h3 id="Spring-Container"><a href="#Spring-Container" class="headerlink" title="Spring Container"></a>Spring Container</h3><ul>
+<li>自动加载 META-INF/spring 目录下的所有 Spring 配置。（这个已在源码中写死）</li>
+<li>配置 spring 配置加载位置：(dubbo.spring.config=classpath*:META-INF/spring/*.xml)</li>
+</ul>
+<h3 id="Jetty-Container"><a href="#Jetty-Container" class="headerlink" title="Jetty Container"></a>Jetty Container</h3><ul>
+<li>启动一个内嵌 Jetty，用于汇报状态。</li>
+<li>配置：<ul>
+<li>dubbo.jetty.port=8080：配置 jetty 启动端口</li>
+<li>dubbo.jetty.directory=/foo/bar：配置可通过 jetty 直接访问的目录，用于存放静态文件</li>
+<li>dubbo.jetty.page=log,status,system：配置显示的页面，缺省加载所有页面</li>
+</ul>
+</li>
+</ul>
+<h3 id="Log4j-Container"><a href="#Log4j-Container" class="headerlink" title="Log4j Container"></a>Log4j Container</h3><ul>
+<li>自动配置 log4j 的配置，在多进程启动时，自动给日志文件按进程分目录。</li>
+<li>配置：<ul>
+<li>dubbo.log4j.file=/foo/bar.log：配置日志文件路径</li>
+<li>dubbo.log4j.level=WARN：配置日志级别</li>
+<li>dubbo.log4j.subdirectory=20880：配置日志子目录，用于多进程启动，避免冲突</li>
+</ul>
+</li>
+</ul>
+<h2 id="容器启动"><a href="#容器启动" class="headerlink" title="容器启动"></a>容器启动</h2><p>SPI 容器扩展类：<code>org.apache.dubbo.container.Container</code><br><img src="https://rong0624.gitee.io/images/Dubbo/1628502633574.jpg" alt="SPI 容器扩展类"></p>
+<p><code>org.apache.dubbo.container.Main</code> 是服务启动的主类，在服务启动时会调用容器的 start() 方法，在服务停止时会调用 stop() 方法；</p>
+<p>那么默认到底是调用那个容器呢？注意 <code>org.apache.dubbo.container.Container</code> 接口有一个注解 <code>@SPI(&quot;spring&quot;)</code>；<br>通过对 Dubbo SPI 的了解，容器应该有内嵌对应的文件：org.apache.dubbo.container.Container；<br>org.apache.dubbo.container.Container内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">spring=org.apache.dubbo.container.spring.SpringContainer</span><br><span class="line">log4j=org.apache.dubbo.container.log4j.Log4jContainer</span><br><span class="line">logback=org.apache.dubbo.container.logback.LogbackContainer</span><br></pre></td></tr></table></figure>
+<p>通过以上分析，可以知道默认调用的是org.apache.dubbo.container.spring.SpringContainer；</p>
+<h2 id="容器停止"><a href="#容器停止" class="headerlink" title="容器停止"></a>容器停止</h2><p>dubbo是通过JDK的ShutdownHook来完成优雅停机的，所以如果用户使用”kill -9    PID”等强制关闭指令，是不会执行优雅停机的，只有通过”kill PID”时，才会执行。</p>
+<p>停止源码（在Main方法里面）：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="string">&quot;true&quot;</span>.equals(System.getProperty(SHUTDOWN_HOOK_KEY))) &#123;</span><br><span class="line">    Runtime.getRuntime().addShutdownHook(<span class="keyword">new</span> Thread(<span class="string">&quot;dubbo-container-shutdown-hook&quot;</span>) &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">for</span> (Container container : containers) &#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    container.stop();</span><br><span class="line">                    logger.info(<span class="string">&quot;Dubbo &quot;</span> + container.getClass().getSimpleName() + <span class="string">&quot; stopped!&quot;</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">                    logger.error(t.getMessage(), t);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    LOCK.lock();</span><br><span class="line">                    STOP.signal();</span><br><span class="line">                &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                    LOCK.unlock();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>1）服务提供方<br>停止时，先标记为不接收新请求，新请求过来时直接报错，让客户端重试其它机器。<br>然后，检测线程池中的线程是否正在运行，如果有，等待所有线程执行完成，除非超时，则强制关闭。</p>
+<p>2）服务消费方<br>停止时，不再发起新的调用请求，所有新的调用在客户端即报错。<br>然后，检测有没有请求的响应还没有返回，等待响应返回，除非超时，则强制关闭。</p>
+<h1 id="RPC"><a href="#RPC" class="headerlink" title="RPC"></a>RPC</h1><h2 id="什么是RPC"><a href="#什么是RPC" class="headerlink" title="什么是RPC"></a>什么是RPC</h2><p>RPC【Remote Procedure Call】是指远程过程调用，是一种进程间通信方式，他是一种技术的思想，而不是规范。<br>它允许程序调用另一个地址空间（通常是共享网络的另一台机器上）的过程或函数，而不用程序员显式编码这个远程调用的细节。即程序员无论是调用本地的还是远程的函数，本质上编写的调用代码基本相同。</p>
+<h2 id="RPC模型"><a href="#RPC模型" class="headerlink" title="RPC模型"></a>RPC模型</h2><p><img src="https://rong0624.gitee.io/images/Dubbo/rpc%E9%80%9A%E8%AE%AF.png" alt="rpc模型">  </p>
+<ol>
+<li>Client：客户端；服务调用方。</li>
+<li>Client Stub：客户端存根；存放服务端地址信息，将客户端的请求信息进行编码，再通过网络传输给发送端 or 接受服务端的响应数据，进行解码。</li>
+<li>Server：服务端；服务提供方。</li>
+<li>Server Stub：服务端存根；接收客户端发送的请求信息并解码，然后调用本地服务进行处理，并将处理结果进行编码后返回。</li>
+</ol>
+<p><strong>RPC两个核心模块：通讯（网络传输），序列化（编码，解码）。</strong></p>
+<h2 id="RPC调用过程"><a href="#RPC调用过程" class="headerlink" title="RPC调用过程"></a>RPC调用过程</h2><p><img src="https://rong0624.gitee.io/images/Dubbo/rpc%E5%BA%8F%E5%88%97%E5%8C%96.png" alt="rpc序列化"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">一次完整的RPC调用流程（同步调用，异步另说）如下： </span><br><span class="line">1）服务消费方以本地调用方式调用服务；（client）</span><br><span class="line">2）client stub接收到调用后负责将方法、参数等组装成能够进行网络传输的消息体；</span><br><span class="line">3）client stub找到服务地址，并将消息发送到服务端；</span><br><span class="line">4）server stub收到消息后进行解码； </span><br><span class="line">5）server stub根据解码结果调用本地的服务； </span><br><span class="line">6）server本地服务执行并将结果返回给server stub；</span><br><span class="line">7）server stub将返回结果打包成消息并发送至消费方； </span><br><span class="line">8）client stub接收到消息，并进行解码； </span><br><span class="line">9）服务消费方得到最终结果。</span><br><span class="line">RPC框架的目标就是要2~8这些步骤都封装起来，这些细节对用户来说是透明的，不可见的。</span><br></pre></td></tr></table></figure>
+
+<h1 id="Dubbo-底层解析"><a href="#Dubbo-底层解析" class="headerlink" title="Dubbo 底层解析"></a>Dubbo 底层解析</h1><h2 id="Dubbo-架构设计"><a href="#Dubbo-架构设计" class="headerlink" title="Dubbo-架构设计"></a>Dubbo-架构设计</h2><p><img src="https://rong0624.gitee.io/images/Dubbo/1627979178965.jpg" alt="dubbo框架设计"></p>
+<h3 id="分类"><a href="#分类" class="headerlink" title="分类"></a>分类</h3><ul>
+<li>Business 实现层</li>
+<li>RPC 远程调用层</li>
+<li>Remoting 网络通讯层</li>
+</ul>
+<h3 id="各层说明"><a href="#各层说明" class="headerlink" title="各层说明"></a>各层说明</h3><ul>
+<li>service 接口层：给服务提供者和服务消费者来实现的（留给开发人员来实现）</li>
+<li>config 配置层：对外配置接口，以 ServiceConfig, ReferenceConfig 为中心，可以直接初始化配置类，也可以通过 spring 解析配置生成配置类</li>
+<li>proxy 服务代理层：服务接口透明代理，生成服务的客户端 Stub 和服务器端 Skeleton, 以 ServiceProxy 为中心，扩展接口为 ProxyFactory</li>
+<li>registry 注册中心层：封装服务地址的注册与发现，以服务 URL 为中心，扩展接口为 RegistryFactory, Registry, RegistryService</li>
+<li>cluster 路由层：封装多个提供者的路由及负载均衡，并桥接注册中心，以 Invoker 为中心，扩展接口为 Cluster, Directory, Router, LoadBalance</li>
+<li>monitor 监控层：RPC 调用次数和调用时间监控，以 Statistics 为中心，扩展接口为 MonitorFactory, Monitor, MonitorService</li>
+<li>protocol 远程调用层：封装 RPC 调用，以 Invocation, Result 为中心，扩展接口为 Protocol, Invoker, Exporter</li>
+<li>exchange 信息交换层：封装请求响应模式，同步转异步，以 Request, Response 为中心，扩展接口为 Exchanger, ExchangeChannel, ExchangeClient, ExchangeServer</li>
+<li>transport 网络传输层：抽象 mina 和 netty 为统一接口，以 Message 为中心，扩展接口为 Channel, Transporter, Client, Server, Codec</li>
+<li>serialize 数据序列化层：可复用的一些工具，扩展接口为 Serialization, ObjectInput, ObjectOutput, ThreadPool</li>
+</ul>
+<h2 id="Dubbo-启动解析，加载配置"><a href="#Dubbo-启动解析，加载配置" class="headerlink" title="Dubbo-启动解析，加载配置"></a>Dubbo-启动解析，加载配置</h2><p><img src="https://rong0624.gitee.io/images/Dubbo/1627981581425.jpg" alt="启动解析"></p>
+<h2 id="Dubbo-服务暴露"><a href="#Dubbo-服务暴露" class="headerlink" title="Dubbo-服务暴露"></a>Dubbo-服务暴露</h2><p><img src="https://rong0624.gitee.io/images/Dubbo/1627981689580.jpg" alt="服务暴露"></p>
+<h2 id="Dubbo-服务引用"><a href="#Dubbo-服务引用" class="headerlink" title="Dubbo-服务引用"></a>Dubbo-服务引用</h2><p><img src="https://rong0624.gitee.io/images/Dubbo/1627981770108.jpg" alt="服务引用"></p>
+<h2 id="Dubbo-服务调用"><a href="#Dubbo-服务调用" class="headerlink" title="Dubbo-服务调用"></a>Dubbo-服务调用</h2><p><img src="https://rong0624.gitee.io/images/Dubbo/1627981894490.jpg" alt="服务调用"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/blog/tags/Dubbo/" rel="tag"># Dubbo</a>
+              <a href="/blog/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag"># 分布式</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/blog/2021/06/25/Dubbo/Dubbo-%E5%9F%BA%E7%A1%80/" rel="prev" title="Dubbo-基础">
+      <i class="fa fa-chevron-left"></i> Dubbo-基础
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/blog/2021/07/08/%E5%88%86%E5%B8%83%E5%BC%8F/%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/ShardingSphere/" rel="next" title="ShardingSphere">
+      ShardingSphere <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Dubbo-%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="nav-number">1.</span> <span class="nav-text">Dubbo 高可用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4"><span class="nav-number">1.1.</span> <span class="nav-text">集群</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%9F%E5%80%BA%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5"><span class="nav-number">1.2.</span> <span class="nav-text">负债均衡策略</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5"><span class="nav-number">1.2.1.</span> <span class="nav-text">负载均衡策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%9F%E5%80%BA%E5%9D%87%E8%A1%A1%E9%85%8D%E7%BD%AE"><span class="nav-number">1.2.2.</span> <span class="nav-text">负债均衡配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E5%AE%B9%E9%94%99"><span class="nav-number">1.3.</span> <span class="nav-text">集群容错</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E5%AE%B9%E9%94%99-1"><span class="nav-number">1.3.1.</span> <span class="nav-text">集群容错</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E5%AE%B9%E9%94%99%E9%85%8D%E7%BD%AE"><span class="nav-number">1.3.2.</span> <span class="nav-text">集群容错配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E9%99%8D%E7%BA%A7"><span class="nav-number">1.4.</span> <span class="nav-text">服务降级</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E9%99%8D%E7%BA%A7%E6%A6%82%E5%BF%B5"><span class="nav-number">1.4.1.</span> <span class="nav-text">服务降级概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dubbo-%E6%9C%8D%E5%8A%A1%E9%99%8D%E7%BA%A7%E6%9C%BA%E5%88%B6"><span class="nav-number">1.4.2.</span> <span class="nav-text">Dubbo 服务降级机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fail-%E7%AD%96%E7%95%A5"><span class="nav-number">1.4.3.</span> <span class="nav-text">fail 策略</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#mock-%E2%80%9Ctrue%E2%80%9D"><span class="nav-number">1.4.3.1.</span> <span class="nav-text">mock&#x3D;“true”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mock-%E2%80%9C%E5%85%B7%E4%BD%93%E7%9A%84mock%E5%AE%9E%E7%8E%B0%E7%B1%BB%E2%80%9D"><span class="nav-number">1.4.3.2.</span> <span class="nav-text">mock&#x3D;“具体的mock实现类”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mock-%E2%80%9C%E6%8A%9B%E5%87%BA%E8%87%AA%E5%AE%9A%E4%B9%89%E5%BC%82%E5%B8%B8%E2%80%9D"><span class="nav-number">1.4.3.3.</span> <span class="nav-text">mock&#x3D;“抛出自定义异常”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mock-%E2%80%9C%E8%BF%94%E5%9B%9E-mock-%E6%95%B0%E6%8D%AE%E2%80%9D"><span class="nav-number">1.4.3.4.</span> <span class="nav-text">mock&#x3D;“返回 mock 数据”</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#force-%E7%AD%96%E7%95%A5"><span class="nav-number">1.4.4.</span> <span class="nav-text">force 策略</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#mock-%E2%80%9Cforce-true%E2%80%9D"><span class="nav-number">1.4.4.1.</span> <span class="nav-text">mock&#x3D;“force:true”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mock-%E2%80%9Cforce-%E6%89%A7%E8%A1%8CMock%E5%AE%9E%E7%8E%B0%E7%B1%BB%E2%80%9D"><span class="nav-number">1.4.4.2.</span> <span class="nav-text">mock&#x3D;“force: 执行Mock实现类”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mock-%E2%80%9Cforce-%E6%8A%9B%E5%87%BA%E8%87%AA%E5%AE%9A%E4%B9%89%E5%BC%82%E5%B8%B8%E2%80%9D"><span class="nav-number">1.4.4.3.</span> <span class="nav-text">mock&#x3D;“force:抛出自定义异常”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mock-%E2%80%9Cforce-%E8%BF%94%E5%9B%9Emock%E6%95%B0%E6%8D%AE%E2%80%9D"><span class="nav-number">1.4.4.4.</span> <span class="nav-text">mock&#x3D;“force:返回mock数据”</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Dubbo-SPI-%E6%9C%BA%E5%88%B6"><span class="nav-number">2.</span> <span class="nav-text">Dubbo SPI 机制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#SPI-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">2.1.</span> <span class="nav-text">SPI 是什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#API-%E5%92%8C-SPI-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">2.2.</span> <span class="nav-text">API 和 SPI 的区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Java-SPI"><span class="nav-number">2.3.</span> <span class="nav-text">Java SPI</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Java-SPI-%E7%AE%80%E4%BB%8B"><span class="nav-number">2.3.1.</span> <span class="nav-text">Java SPI 简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Java-SPI-%E5%AE%9E%E7%8E%B0%E7%BB%86%E8%8A%82"><span class="nav-number">2.3.2.</span> <span class="nav-text">Java SPI 实现细节</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Java-SPI-%E7%BC%BA%E7%82%B9"><span class="nav-number">2.3.3.</span> <span class="nav-text">Java SPI 缺点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Dubbo-SPI"><span class="nav-number">2.4.</span> <span class="nav-text">Dubbo SPI</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Dubbo-SPI-%E7%AE%80%E4%BB%8B"><span class="nav-number">2.4.1.</span> <span class="nav-text">Dubbo SPI 简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dubbo-SPI-%E5%AE%9E%E7%8E%B0%E7%BB%86%E8%8A%82"><span class="nav-number">2.4.2.</span> <span class="nav-text">Dubbo SPI 实现细节</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dubbo-%E8%87%AA%E5%AE%9A%E4%B9%89%E6%89%A9%E5%B1%95%E7%BB%84%E4%BB%B6"><span class="nav-number">2.4.3.</span> <span class="nav-text">Dubbo 自定义扩展组件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B0%E5%BC%80%E4%B8%80%E4%B8%AAmaven%E5%B7%A5%E7%A8%8B%EF%BC%88protocol-demo%EF%BC%89%EF%BC%8C%E6%89%93%E5%8C%85%E6%96%B9%E5%BC%8F%E4%B8%BAjar%EF%BC%9B"><span class="nav-number">2.4.3.1.</span> <span class="nav-text">新开一个maven工程（protocol-demo），打包方式为jar；</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Protocol-%E8%87%AA%E5%AE%9A%E4%B9%89%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.4.3.2.</span> <span class="nav-text">Protocol 自定义实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Dubbo%E8%A7%84%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E9%85%8D%E7%BD%AE"><span class="nav-number">2.4.3.3.</span> <span class="nav-text">Dubbo规定目录下配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9%E6%9C%8D%E5%8A%A1%E6%8F%90%E4%BE%9B%E8%80%85%EF%BC%8C%E4%BD%BF%E7%94%A8%E8%87%AA%E5%AE%9A%E4%B9%89%E7%9A%84-Protocol-%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.4.3.4.</span> <span class="nav-text">修改服务提供者，使用自定义的 Protocol 实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">2.4.3.5.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E5%8D%9A%E5%AE%A2"><span class="nav-number">2.5.</span> <span class="nav-text">参考博客</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Dubbo-Container%EF%BC%88%E6%9C%8D%E5%8A%A1%E5%AE%B9%E5%99%A8%EF%BC%89"><span class="nav-number">3.</span> <span class="nav-text">Dubbo Container（服务容器）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Dubbo-Container-%E7%AE%80%E4%BB%8B"><span class="nav-number">3.1.</span> <span class="nav-text">Dubbo Container 简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Dubbo-%E5%86%85%E7%BD%AE%E4%BA%86%E5%87%A0%E7%A7%8D%E6%9C%8D%E5%8A%A1%E5%AE%B9%E5%99%A8"><span class="nav-number">3.2.</span> <span class="nav-text">Dubbo 内置了几种服务容器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%AE%B9%E5%99%A8%E5%88%86%E7%B1%BB"><span class="nav-number">3.2.1.</span> <span class="nav-text">服务容器分类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Spring-Container"><span class="nav-number">3.2.2.</span> <span class="nav-text">Spring Container</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Jetty-Container"><span class="nav-number">3.2.3.</span> <span class="nav-text">Jetty Container</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Log4j-Container"><span class="nav-number">3.2.4.</span> <span class="nav-text">Log4j Container</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E5%90%AF%E5%8A%A8"><span class="nav-number">3.3.</span> <span class="nav-text">容器启动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E5%81%9C%E6%AD%A2"><span class="nav-number">3.4.</span> <span class="nav-text">容器停止</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RPC"><span class="nav-number">4.</span> <span class="nav-text">RPC</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFRPC"><span class="nav-number">4.1.</span> <span class="nav-text">什么是RPC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RPC%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.2.</span> <span class="nav-text">RPC模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RPC%E8%B0%83%E7%94%A8%E8%BF%87%E7%A8%8B"><span class="nav-number">4.3.</span> <span class="nav-text">RPC调用过程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Dubbo-%E5%BA%95%E5%B1%82%E8%A7%A3%E6%9E%90"><span class="nav-number">5.</span> <span class="nav-text">Dubbo 底层解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Dubbo-%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="nav-number">5.1.</span> <span class="nav-text">Dubbo-架构设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%B1%BB"><span class="nav-number">5.1.1.</span> <span class="nav-text">分类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%84%E5%B1%82%E8%AF%B4%E6%98%8E"><span class="nav-number">5.1.2.</span> <span class="nav-text">各层说明</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Dubbo-%E5%90%AF%E5%8A%A8%E8%A7%A3%E6%9E%90%EF%BC%8C%E5%8A%A0%E8%BD%BD%E9%85%8D%E7%BD%AE"><span class="nav-number">5.2.</span> <span class="nav-text">Dubbo-启动解析，加载配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Dubbo-%E6%9C%8D%E5%8A%A1%E6%9A%B4%E9%9C%B2"><span class="nav-number">5.3.</span> <span class="nav-text">Dubbo-服务暴露</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Dubbo-%E6%9C%8D%E5%8A%A1%E5%BC%95%E7%94%A8"><span class="nav-number">5.4.</span> <span class="nav-text">Dubbo-服务引用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Dubbo-%E6%9C%8D%E5%8A%A1%E8%B0%83%E7%94%A8"><span class="nav-number">5.5.</span> <span class="nav-text">Dubbo-服务调用</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">神奇的荣荣</p>
+  <div class="site-description" itemprop="description">新知识要不断的总结记录成笔记，要多写，多画，能够清晰透彻的将知识讲给别人听，才是达到理解的层次。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/blog/archives/">
+        
+          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/blog/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/blog/tags/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/niubilityoyr" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;niubilityoyr" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">神奇的荣荣</span>
+</div>
+
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+-->
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/blog/lib/anime.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.min.js"></script>
+  <script src="/blog/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/blog/js/utils.js"></script>
+
+<script src="/blog/js/motion.js"></script>
+
+
+<script src="/blog/js/schemes/pisces.js"></script>
+
+
+<script src="/blog/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
